@@ -1,81 +1,80 @@
 # Voca
 
-Portuguese speaking and recall practice for a Spanish speaker. Brazilian forms come first for PORTUGUE 102, and Lisbon forms take over on May 1, 2027.
+Portuguese and French speaking and recall practice for Spanish speakers. It has live conversation with corrections, spaced recall, Spanish bridges, pronunciation drills, and a level test for each language.
 
-It installs on an iPhone from Safari. Cards, Ponte and Sons work offline. Conversa and class imports need a connection.
+Portuguese shows Brazilian and Portugal forms. Brazilian forms come first for PORTUGUE 102, and Portugal forms take over on May 1, 2027. French uses standard France French.
 
 Live app: https://voca-nine-taupe.vercel.app
 
-## Put it on your iPhone
+## Install it on an iPhone
 
-You need a free GitHub account, a free Vercel account, and an Anthropic API account with credit. API usage is billed separately from a Claude subscription.
-
-### 1. Get an API key
-1. Sign in to the Claude Console and add a small amount of credit. [Anthropic's guide](https://support.claude.com/en/articles/8114521-how-can-i-access-the-anthropic-api) shows how to get there.
-2. Set a low monthly spend limit. This caps your cost even if something goes wrong.
-3. Create an API key and copy it somewhere safe for step 3.
-
-### 2. Put the code on GitHub
-1. Create a new **private** repository named `voca`.
-2. Upload everything in this folder, including `vercel.json`. Do not upload a real `.env` file.
-
-### 3. Deploy on Vercel
-1. Sign in at https://vercel.com with GitHub and import the repository. Keep the default settings.
-2. Before you deploy, add two environment variables:
-   - `ANTHROPIC_API_KEY`: the key from step 1
-   - `APP_PASSCODE`: a long passphrase of your own, such as four random words
-3. Deploy, and open the address Vercel gives you. If you add the variables after deploying, redeploy once.
-
-### 4. Install it
-1. Open your Vercel address in **Safari** on your iPhone.
+1. Open the live address in **Safari**.
 2. Tap Share, then **Add to Home Screen**, then Add.
-3. Open Voca from your Home Screen. In Conversa, enter your passcode.
 
-To speak instead of type, go to Settings > General > Keyboard > Keyboards and add Portuguese. Then tap the microphone on the keyboard in Conversa.
+Cards, bridges and sounds work offline. Conversation, feedback and class imports need a connection.
 
-For Portugal and Brazil voices in Sons, add them under Settings > Accessibility > Read & Speak > Voices. Menu names can vary by iOS version.
+## Turn on accounts
+
+Accounts save progress for each language and carry it across devices. The app keeps working without them.
+
+### 1. Create the database
+1. Create a free project at https://supabase.com.
+2. Open **SQL Editor**, paste in everything from `supabase/schema.sql`, and click **Run**.
+3. Under **Authentication > URL Configuration**, set **Site URL** to the live address.
+4. Under **Project Settings**, copy the **Project URL** and the **publishable** or **anon** key.
+
+### 2. Connect it in Vercel
+Add these under **Settings > Environment Variables**, then redeploy:
+
+| Name | Value |
+|---|---|
+| `SUPABASE_URL` | Your Project URL |
+| `SUPABASE_ANON_KEY` | Your publishable or anon key |
+| `ALLOWED_EMAILS` | The email you'll sign in with. Separate several with commas. |
+
+Only emails on this list can use Claude, so strangers can't spend your API credit.
+
+### 3. Create your account
+Use the same email as your Supabase account, because Supabase's built-in email sender only reaches project team members and is capped at a few messages an hour. Tap the confirmation link, then sign in.
+
+Free Supabase projects can pause after about a week of low activity. Your data is kept, and you can restore the project from its dashboard.
+
+## Updating the app
+
+Changes pushed to `main` deploy automatically. The phone picks them up the next time the app opens, and they show on the open after that.
+
+| To change | Edit |
+| --- | --- |
+| Portuguese content | `public/lang/pt.js` |
+| French content | `public/lang/fr.js` |
+| Screens and logic | `public/app.js` |
+| Look and feel | `public/styles.css` |
+| Accounts and sync | `public/auth.js` |
+| Partner connection | `public/partner.js` |
+| Server, models, limits | `api/chat.js` |
+| Offline behavior | `public/sw.js`, and raise `CACHE` when you change `SHELL` |
+
+To add a language, copy the structure of `public/lang/fr.js`, add the file to `public/index.html` and `public/sw.js`, and add its voice in `public/app.js`.
+
+To change models without editing code, set `MODEL_QUICK` or `MODEL_DEFAULT` in Vercel.
 
 ## Project layout
 
 ```text
-api/chat.js   Server that holds the API key and talks to Claude
-public/       The app itself, served to the phone
-scripts/      Local preview server and icon generator
-tests/        Server safety tests and the iPhone-size app test
-vercel.json   Hosting, security and timeout settings
+api/        Server code that holds the API key and checks access
+public/     The app, served to the phone
+scripts/    Local preview server and icon generator
+supabase/   Database setup
+tests/      Server tests and the iPhone-size app test
+vercel.json Hosting, security and timeout settings
 ```
-
-## Your progress
-
-Progress is stored only on the device you use. Use Hoje > Settings > Copy backup now and then, and keep the text in Notes. Paste it into the same box to restore.
-
-## Updating the app
-
-Edit files on GitHub and Vercel redeploys automatically. The phone picks up changes the next time the app opens, and they show on the open after that.
-
-| To change | Edit |
-| --- | --- |
-| Words, rules, scenes | `public/content.js` |
-| Screens and logic | `public/app.js` |
-| Look and feel | `public/styles.css` |
-| Partner connection on the phone | `public/partner.js` |
-| Server, models, limits | `api/chat.js` |
-| Offline behavior | `public/sw.js`, and raise `CACHE` when you change `SHELL` |
-
-To change models without editing code, set `MODEL_QUICK` or `MODEL_DEFAULT` in Vercel.
 
 ## Run it on a computer
 
-Requires Node 20 or newer. Tests use a stand-in for the Claude API, so they spend nothing.
+Requires Node 20 or newer. Tests use stand-ins for Claude and Supabase, so they spend nothing.
 
 ```bash
-npm test                                   # server safety tests
+npm test                    # server tests
+node tests/e2e.cjs /tmp     # full app test at iPhone size, needs Playwright
 ANTHROPIC_API_KEY=your-key APP_PASSCODE=test npm run dev   # http://localhost:3000
-node tests/e2e.cjs /tmp                    # iPhone-size app test, needs Playwright
 ```
-
-## Ideas for what's next
-
-1. **Sync across devices:** add accounts and a database so progress isn't tied to one phone.
-2. **Live speech:** add a transcription service so you can talk hands-free without the keyboard.
-3. **App Store version:** wrap this code with Capacitor. This needs a Mac and a paid Apple Developer membership.

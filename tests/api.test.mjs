@@ -8,6 +8,16 @@ let reply = { status: 200, body: { content: [{ type: "text", text: "Olá!" }], s
 const mock = createServer(async (req, res) => {
   let raw = "";
   for await (const c of req) raw += c;
+  if (req.url.startsWith("/auth/v1/user")) {
+    const tokens = {
+      "Bearer good": { email: "Marcos@Example.com", email_confirmed_at: "2026-11-01" },
+      "Bearer stranger": { email: "other@example.com", email_confirmed_at: "2026-11-01" },
+      "Bearer unconfirmed": { email: "marcos@example.com", email_confirmed_at: null },
+    };
+    const user = tokens[req.headers.authorization];
+    res.statusCode = user ? 200 : 401;
+    return res.end(JSON.stringify(user || {}));
+  }
   seen = { headers: req.headers, body: JSON.parse(raw) };
   res.statusCode = reply.status;
   res.end(JSON.stringify(reply.body));
@@ -16,6 +26,9 @@ await new Promise((r) => mock.listen(0, r));
 process.env.ANTHROPIC_API_URL = `http://127.0.0.1:${mock.address().port}/v1/messages`;
 process.env.ANTHROPIC_API_KEY = "test-key";
 process.env.APP_PASSCODE = "correct horse";
+process.env.SUPABASE_URL = `http://127.0.0.1:${mock.address().port}`;
+process.env.SUPABASE_ANON_KEY = "public-key";
+process.env.ALLOWED_EMAILS = "someone@example.com, marcos@example.com";
 const { default: handler } = await import("../api/chat.js");
 test.after(() => mock.close());
 
@@ -71,8 +84,26 @@ test("maps Claude API failures without leaking details", async () => {
   assert.equal((await call(good)).json.code, "refused");
   reply = { status: 200, body: { content: [{ type: "text", text: "Olá!" }] } };
 });
+test("accepts an allowed, confirmed account without the passcode", async () => {
+  const r = await call({ accessToken: "good", tier: "quick", messages: good.messages });
+  assert.equal(r.code, 200);
+});
+test("rejects other accounts without calling Claude", async () => {
+  seen = null;
+  const m = { tier: "quick", messages: good.messages };
+  assert.equal((await call({ ...m, accessToken: "stranger" })).json.code, "not_allowed");
+  assert.equal((await call({ ...m, accessToken: "unconfirmed" })).json.code, "not_allowed");
+  assert.equal((await call({ ...m, accessToken: "expired" })).json.code, "bad_session");
+  assert.equal(seen, null);
+});
+test("a bad token cannot fall back to no check", async () => {
+  assert.equal((await call({ ...good, passcode: "", accessToken: "expired" })).code, 401);
+});
 test("reports a server that isn't set up", async () => {
+  const { APP_PASSCODE, SUPABASE_URL } = process.env;
   delete process.env.APP_PASSCODE;
+  delete process.env.SUPABASE_URL;
   assert.equal((await call(good)).json.code, "not_configured");
-  process.env.APP_PASSCODE = "correct horse";
+  process.env.APP_PASSCODE = APP_PASSCODE;
+  process.env.SUPABASE_URL = SUPABASE_URL;
 });

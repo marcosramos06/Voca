@@ -5,24 +5,27 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import handler from "../api/chat.js";
+import publicConfig from "../api/config.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pub = join(root, "public");
 const port = Number(process.env.PORT || 3000);
-const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".webmanifest": "application/manifest+json" };
+const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".webmanifest": "application/manifest+json", ".svg": "image/svg+xml" };
 const config = JSON.parse(await readFile(join(root, "vercel.json"), "utf8"));
 const globalHeaders = config.headers.find((h) => h.source === "/(.*)").headers;
 
 createServer(async (req, res) => {
-  for (const h of globalHeaders) res.setHeader(h.key, h.value);
+  // A local sign-in stand-in sits outside the production connect-src list.
+  const extra = process.env.SUPABASE_URL?.startsWith("http://") ? ` ${process.env.SUPABASE_URL}` : "";
+  for (const h of globalHeaders) res.setHeader(h.key, h.key === "Content-Security-Policy" ? h.value.replace("connect-src 'self'", `connect-src 'self'${extra}`) : h.value);
   const path = new URL(req.url, "http://localhost").pathname;
-  if (path === "/api/chat") {
+  if (path === "/api/chat" || path === "/api/config") {
     let raw = "";
     for await (const chunk of req) raw += chunk;
     try { req.body = JSON.parse(raw); } catch { req.body = {}; }
     res.status = (c) => { res.statusCode = c; return res; };
     res.json = (o) => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(o)); };
-    return handler(req, res);
+    return (path === "/api/chat" ? handler : publicConfig)(req, res);
   }
   const file = normalize(join(pub, path === "/" ? "index.html" : path));
   if (!file.startsWith(pub)) { res.statusCode = 403; return res.end(); }

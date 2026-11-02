@@ -1,3 +1,5 @@
+const LANGUAGES = {};
+(function () {
 /* All learning content. Edit here to add words, rules or scenes. */
 // [english, spanish, Brazil, Portugal or "" when identical, note, topic]
 const RAW=[
@@ -205,5 +207,45 @@ const SCENARIOS=[
 {id:"planos",t:"Planos de sábado",s:"Future subjunctive",who:"a friend making weekend plans, steering him to use se and quando about the future",br:"O que você vai fazer no sábado? Se fizer sol, a gente pode ir à praia!",pt:"O que vais fazer no sábado? Se estiver sol, podemos ir à praia!",ph:[["If it's sunny, we'll go","Se fizer sol, a gente vai","Se estiver sol, vamos"],["When you arrive, text me","Quando você chegar, me manda uma mensagem","Quando chegares, manda-me uma mensagem"],["Count me in","Tô dentro","Contem comigo"],["See you soon","Até mais","Até já"]]},
 {id:"livre",t:"Tema livre",s:"Pick any topic",who:"a friendly student who is happy to talk about any topic",br:"Oi! Sobre o que você quer conversar hoje?",pt:"Olá! Sobre o que queres falar hoje?",ph:[["I want to talk about…","Quero falar sobre…",""],["What do you think?","O que você acha?","O que achas?"],["Tell me more","Me conta mais","Conta-me mais"]]}
 ];
-const ERR={spanish:"Spanish carryover",gender:"Gender",verb:"Verb forms",prep:"Prepositions, contractions",vocab:"Word choice",spelling:"Spelling, accents"};
-
+const DIAGNOSTIC=[
+[
+ {q:"Eu ___ estudante.",a:"sou",o:["estou","tenho","é"]},
+ {q:"Nós ___ em Boston.",a:"moramos",o:["moro","moram","mora"]},
+ {q:"Eu gosto ___ café.",a:"de",o:["a","em","com"]},
+ {q:"What does this mean? Onde fica a estação?",a:"Where is the station?",o:["What time is the train?","Is the store open?","Where is the bathroom?"]},
+ {listen:"Quanto custa?",q:"What did you hear?",a:"How much is it?",o:["What is it?","Where is it?","Who is it?"]}
+],
+[
+ {q:"Ontem eu ___ ao cinema.",a:"fui",o:["vou","irei","vá"]},
+ {q:"Amanhã eu vou ___.",a:"viajar",o:["a viajar","viajo","viajei"]},
+ {q:"Ontem ela ___ o livro na mesa.",a:"pôs",o:["pus","pôr","põem"]},
+ {q:"Quando eu era criança, ___ muito futebol.",a:"jogava",o:["jogo","jogarei","jogue"]},
+ {listen:"Não comi nada hoje.",q:"What did you hear?",a:"I didn't eat anything today.",o:["I'm eating now.","I ate a lot today.","I'll eat tomorrow."]}
+],
+[
+ {q:"Espero que você ___ amanhã.",a:"venha",o:["vem","vinha","virá"]},
+ {q:"Quando eu ___ a Lisboa, vou visitar o museu.",a:"for",o:["vou","fui","ia"]},
+ {q:"Se eu tivesse tempo, ___ mais.",a:"estudaria",o:["estudo","estudei","estude"]},
+ {q:"Ontem ele disse que ___ cansado.",a:"estava",o:["esteja","estará","estivesse"]},
+ {listen:"Tenho comido pouco ultimamente.",q:"What did you hear?",a:"I've been eating little lately.",o:["I ate a little yesterday.","I'll eat less soon.","I have food with me."]}
+],
+[
+ {q:"É importante nós ___ cedo.",a:"chegarmos",o:["chegamos","chegaremos","chegávamos"]},
+ {q:"Caso ___ problemas, avise o professor.",a:"haja",o:["há","houve","haverá"]},
+ {q:"Se eu ___ sabido, teria vindo.",a:"tivesse",o:["tenho","terei","teria"]},
+ {q:"Apesar de ___ cansado, ele foi ao treino.",a:"estar",o:["esteja","está","estará"]},
+ {listen:"Ainda que fizesse frio, saímos para correr.",q:"What did you hear?",a:"Even though it was cold, we went out for a run.",o:["It's cold, so we stayed inside.","We'll run if it gets cold.","We ran because it was warm."]}
+]
+];
+LANGUAGES.pt={
+  code:"pt",name:"Portuguese",native:"Português",voice:"pt-BR",
+  tabs:["Hoje","Conversa","Cartões","Ponte","Sons"],
+  greet:(h)=>h<12?"Bom dia":h<19?"Boa tarde":"Boa noite",
+  importFields:'{"en":"English prompt","es":"Spanish equivalent","br":"Brazilian Portuguese","pt":"European Portuguese, or empty if identical","note":"short tip, or empty"}',
+  placeholder:"Responda em português. Stuck on a word? Write it in Spanish.",
+  correct:"Certo!",
+  sample:{said:"Yo voy a comer",better:"Eu vou comer",why:"Ir takes no a before the verb.",line:"Yo voy a comer con mi amigo"},
+  writePrompt:"Write two or three sentences in Portuguese about what you did last weekend.",
+  cards:CARDS,rules:RULES_ES,genders:GENDERS,falseFriends:FALSE,bridges:BRIDGES,traps:TRAPS,sounds:SOUNDS,scenarios:SCENARIOS,diagnostic:DIAGNOSTIC
+};
+})();
