@@ -207,7 +207,7 @@ table{border-collapse:collapse;width:100%}
   body.landing-page .wrap>*{max-width:none}
   .landing{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);min-height:100vh;gap:0}
   .landing-art{height:auto;margin:0;order:2;align-content:end;padding:56px}
-  .landing-art span{font-size:5rem}
+  .landing-art span{font-size:clamp(3rem,7vw,5.5rem);overflow-wrap:anywhere}
   .landing-main{align-content:center;justify-self:center;width:100%;max-width:520px;padding:48px 28px}
   .toast{bottom:32px}
 }
