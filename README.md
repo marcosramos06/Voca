@@ -65,6 +65,10 @@ Talk mode uses the browser's speech recognition, which works in Chrome and Safar
 
 Photo lessons shrink the image on the device and send it to Claude through `api/chat.js`. Voca doesn't store the photo.
 
+## Photo credits
+
+Picture Words uses photos from Wikimedia Commons. Each photo shows its author and license, and links to its source page.
+
 ## Updating the app
 
 Changes pushed to `main` deploy automatically. The app loads the latest version each time it opens with a connection.
@@ -73,6 +77,7 @@ Changes pushed to `main` deploy automatically. The app loads the latest version 
 | --- | --- |
 | Portuguese content | `public/lang/pt.js` |
 | French content | `public/lang/fr.js` |
+| Picture words and photo credits | `public/lang/pictures.js` |
 | Screens and logic | `public/app.js` |
 | Look and feel | `public/styles.css` |
 | Accounts and sync | `public/auth.js` |

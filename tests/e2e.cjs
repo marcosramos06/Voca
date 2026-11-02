@@ -176,6 +176,29 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     assert.equal(await overflow(p), false, "overflow pt ponte");
     await p.screenshot({ path: `${shots}/8-ponte-pt.png` });
 
+    // picture words: browse a set, then finish a quiz that feeds the review schedule
+    await p.evaluate(() => { S.lang = "fr"; location.hash = "fotos"; }); await p.waitForSelector(".sets");
+    assert.equal(await p.evaluate(() => PICTURE_RAW.length), 63);
+    assert.equal(await p.evaluate(() => new Set(PICTURE_RAW.map((r) => r[6])).size), 63);
+    assert.equal(await p.evaluate(() => PICTURE_RAW.every((r) => r.length === 9 && r[7] && r[8])), true);
+    await p.click('[data-act="pic-learn"][data-id="food"]'); await p.waitForSelector(".gallery .pic-card");
+    assert.equal(await p.locator(".pic-card").count(), 16);
+    assert.match(await p.textContent(".pic-card .credit"), /Photo: /);
+    await p.screenshot({ path: `${shots}/pic-learn.png` });
+    await p.evaluate(() => startPicQuiz("food"));
+    assert.equal(await p.locator(".pic-opt").count(), 4);
+    await p.screenshot({ path: `${shots}/pic-pick.png` });
+    await p.evaluate(() => { const id = PW.q[PW.i].id; document.querySelector(`[data-act="pic-pick"][data-id="${id}"]`).click(); });
+    await p.waitForSelector(".pic-opt.right"); await p.waitForSelector("#pic-next"); await p.click("#pic-next");
+    await p.waitForSelector("#pic-input");
+    await p.fill("#pic-input", await p.evaluate(() => PW.q[PW.i].fr)); await p.keyboard.press("Enter"); await p.waitForSelector(".verdict.good");
+    assert.equal(await p.evaluate(() => PW.right), 2);
+    await p.screenshot({ path: `${shots}/pic-name.png` });
+    for (let i = 0; i < 9; i++) await p.evaluate(() => { if (PW.res == null) { PW.val = ""; picResult("bad"); } picNext(); });
+    await p.waitForFunction(() => PW.mode === "done");
+    assert.ok(await p.evaluate(() => Object.keys(P().cards).filter((k) => k.startsWith("pic-")).length) >= 10);
+    await p.evaluate(() => { PW = null; S.lang = "pt"; location.hash = "hoje"; render(); });
+
     // pronunciation check on one word
     await p.evaluate(() => { window.__say = "vida"; S.lang = "pt"; location.hash = "sons"; render(); }); await p.waitForSelector('[data-act="try-say"]');
     await p.click('[data-act="try-say"]'); await p.waitForSelector(".ok-note");
@@ -216,7 +239,7 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     let issues = [];
     for (const lang of ["fr", "pt"]) {
       await p.evaluate((l) => { S.lang = l; R = null; render(); }, lang);
-      for (const t of ["hoje", "perfil", "conversa", "cartoes", "ponte", "sons"]) {
+      for (const t of ["hoje", "perfil", "fotos", "conversa", "cartoes", "ponte", "sons"]) {
         await p.evaluate((x) => (location.hash = x), t); await p.waitForTimeout(120);
         issues = issues.concat(await audit(`${lang}/${t}`));
         if (t === "ponte" && lang === "pt") { await p.click('[data-act="pseg"][data-v="bp"]'); await p.waitForSelector("#vocab-body tr"); issues = issues.concat(await audit("pt/ponte-bp")); await p.screenshot({ path: `${shots}/a11y-ponte.png` }); }

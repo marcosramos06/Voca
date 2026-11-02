@@ -116,6 +116,7 @@ const ICONS = {
   ponte: line('<path d="M3 18v-3a9 9 0 0 1 18 0v3M3 18h18M8 18v-5M12 18v-6M16 18v-5"/>'),
   sons: line('<path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/>'),
   check: line('<path d="m5 12 5 5 9-10"/>'),
+  photo: line('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.700"/><path d="m4 18 5-5 3 3 3-3 5 5"/>'),
   flame: line('<path d="M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-2 1-3.500 2-4.500 0 2 1 3 2 3 0-3 0-6 2-9.500z"/>'),
   arrow: line('<path d="M5 12h14M13 6l6 6-6 6"/>'),
 };
@@ -161,7 +162,8 @@ function grade(ans, accepted) {
 const accepted = (c) => [c.br, c.pt, c.fr].concat(c.alt || []);
 
 /* ---------- spaced review ---------- */
-const all = () => L().cards.concat(P().custom || []);
+const pictures = () => pictureCards(S.lang);
+const all = () => L().cards.concat(pictures(), P().custom || []);
 const st = (id) => P().cards[id] || { b: 0, d: 0 };
 const todayNum = () => dayNum(today());
 const dueCards = () => {
@@ -550,10 +552,11 @@ async function submitWriting() {
 
 /* ---------- screens ---------- */
 const TAB_IDS = ["hoje", "conversa", "cartoes", "ponte", "sons"];
+const EXTRA_ROUTES = ["teste", "perfil", "fotos"];
 let tab = "hoje", pSeg = "es", restoreArmed = false, welcomeMode = "signin", welcomeErr = "", welcomeBusy = false, welcomeNote = "", homeOpen = false;
-const fromHash = () => { const h = location.hash.slice(1); return TAB_IDS.includes(h) || h === "teste" || h === "perfil" ? h : "hoje"; };
+const fromHash = () => { const h = location.hash.slice(1); return TAB_IDS.includes(h) || EXTRA_ROUTES.includes(h) ? h : "hoje"; };
 tab = fromHash();
-window.addEventListener("hashchange", () => { if (T.on) stopTalk(); homeOpen = false; tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); $("#view").focus({ preventScroll: true }); animateIn(); });
+window.addEventListener("hashchange", () => { if (T.on) stopTalk(); if (location.hash !== "#fotos") PW = null; homeOpen = false; tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); $("#view").focus({ preventScroll: true }); animateIn(); });
 
 function animateIn() { const v = $("#view"); v.classList.add("enter"); clearTimeout(v._t); v._t = setTimeout(() => v.classList.remove("enter"), 700); }
 function chrome() {
@@ -613,6 +616,7 @@ function hoje() {
     <a class="action" href="#cartoes">${ICONS.cartoes}<b>Recall</b><span>${Math.min(q.length, GOAL_C)} cards today</span></a>
     <a class="action" href="#ponte">${ICONS.ponte}<b>Bridge</b><span>${esc(br.t)}</span></a>
     <a class="action" href="#sons">${ICONS.sons}<b>Sounds</b><span>${lang.sounds.length} drills</span></a>
+    <a class="action" href="#fotos">${ICONS.photo}<b>Pictures</b><span>${pictures().filter((c) => st(c.id).b > 0).length} of ${pictures().length} started</span></a>
   </section>
   ${nextUp()}
   <div class="dash">
@@ -755,10 +759,10 @@ function cartoes() {
   } else if (R) {
     const c = R.q[R.i], pct = Math.round((R.i / R.q.length) * 100), r = R.rev;
     body = `<section class="flash deck stack" style="gap:18px"><div class="row between small muted"><span>${R.i + 1} / ${R.q.length}</span><button class="link small" data-act="quit">End session</button></div><div class="prog"><i style="width:${pct}%"></i></div>
-      <div class="eyebrow">${c.fix ? "Correct this" : c.tag === "class" ? "From class" : c.tag === "photo" ? "From your photo" : c.tag === "focus" ? "Weak spot drill" : st(c.id).lapses >= 3 ? "Tricky word" : `Say it in ${L().name}`}</div><div class="prompt">${esc(c.en)}</div>
-      ${c.es ? `<div class="muted"><span class="tag">ES</span>${esc(c.es)}</div>` : ""}
+      <div class="eyebrow">${c.picture ? `Name this in ${L().name}` : c.fix ? "Correct this" : c.tag === "class" ? "From class" : c.tag === "photo" ? "From your photo" : c.tag === "focus" ? "Weak spot drill" : st(c.id).lapses >= 3 ? "Tricky word" : `Say it in ${L().name}`}</div>${c.picture ? pictureImg(c) : `<div class="prompt">${esc(c.en)}</div>`}
+      ${c.es && !c.picture ? `<div class="muted"><span class="tag">ES</span>${esc(c.es)}</div>` : ""}
       <input type="text" id="card-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type it from memory" value="${esc(R.val)}" ${r ? "disabled" : ""} aria-label="Your answer">
-      ${r ? `<div role="status" class="verdict ${r.g === "good" ? "good" : r.g === "accent" ? "warn" : "bad"}">${r.g === "good" ? (r.over ? "Counted as correct" : esc(L().correct)) : r.g === "accent" ? "Right, but check the accents" : "Not this time"}</div>${forms(c)}${c.note ? `<p class="muted small">${esc(c.note)}</p>` : ""}
+      ${r ? `<div role="status" class="verdict ${r.g === "good" ? "good" : r.g === "accent" ? "warn" : "bad"}">${r.g === "good" ? (r.over ? "Counted as correct" : esc(L().correct)) : r.g === "accent" ? "Right, but check the accents" : "Not this time"}</div>${forms(c)}${c.picture ? credit(c) : ""}${c.note ? `<p class="muted small">${esc(c.note)}</p>` : ""}
         <div class="btn-row"><button class="btn" id="next-card" data-act="next">Next</button>${r.g === "bad" ? `<button class="btn ghost" data-act="override">I was right</button>` : ""}</div>` : `<div class="btn-row"><button class="btn" data-act="check">Check</button><button class="btn ghost" data-act="check">I don't know</button></div>`}
     </section>`;
   } else {
@@ -813,6 +817,53 @@ function sons() {
     <section class="stack"><h3>Real speech</h3><div class="list">${res.map((r) => `<a class="rowlink" href="${r[1]}" rel="noopener"><span>${esc(r[0])}</span><span>${esc(r[2])}</span></a>`).join("")}</div></section>`;
 }
 
+/* ---------- picture words ---------- */
+let PW = null;
+const answerText = (c) => (S.lang === "fr" ? c.fr : c.br);
+const pictureImg = (c, cls = "photo") => `<img class="${cls}" src="${esc(photoUrl(c.file))}" alt="${esc(c.en)}" loading="lazy" referrerpolicy="no-referrer">`;
+const credit = (c) => `<p class="credit"><a href="${esc(photoPage(c.file))}" rel="noopener" target="_blank">Photo: ${esc(c.author)}, ${esc(c.license)}</a></p>`;
+function fotos() {
+  const list = pictures();
+  if (PW && PW.mode === "done") return `<section class="flash narrow stack" style="gap:18px"><h1>${PW.right} of ${PW.total}</h1><p class="muted">These words are now part of your reviews, so they'll come back at the right time.</p><div class="btn-row"><button class="btn" data-act="pic-quiz" data-id="${PW.cat}">Go again</button><button class="btn ghost" data-act="pic-home">All sets</button></div></section>`;
+  if (PW && PW.mode === "learn") {
+    const set = list.filter((c) => c.cat === PW.cat), title = PICTURE_SETS.find((x) => x.id === PW.cat).title;
+    return `<section class="stack"><div class="row between"><h2>${esc(title)}</h2><button class="link" data-act="pic-home">All sets</button></div><div class="btn-row"><button class="btn" data-act="pic-quiz" data-id="${PW.cat}">Start quiz</button><button class="btn ghost" data-act="pic-home">Back</button></div></section>
+      <section class="gallery">${set.map((c) => `<article class="pic-card">${pictureImg(c)}<div class="pic-body">${forms(c)}<p class="small muted"><span class="tag">ES</span>${esc(c.es)}</p>${credit(c)}</div></article>`).join("")}</section>`;
+  }
+  if (PW && PW.mode === "quiz") {
+    const c = PW.q[PW.i], pct = Math.round((PW.i / PW.q.length) * 100), done = PW.res != null;
+    const head = `<div class="row between small muted"><span>${PW.i + 1} / ${PW.q.length}</span><button class="link small" data-act="pic-home">End quiz</button></div><div class="prog"><i style="width:${pct}%"></i></div>`;
+    const verdict = done ? `<div role="status" class="verdict ${PW.res === "bad" ? "bad" : PW.res === "accent" ? "warn" : "good"}">${PW.res === "bad" ? "Not this time" : PW.res === "accent" ? "Right, but check the accents" : esc(L().correct)}</div>${forms(c)}${credit(c)}<button class="btn wide" id="pic-next" data-act="pic-next">Next</button>` : "";
+    if (PW.type === "pick") {
+      return `<section class="flash narrow stack" style="gap:16px">${head}<div class="eyebrow">Pick the photo</div><div class="prompt line">${say(answerText(c), S.lang === "fr" ? "fr" : lead())}<span>${esc(answerText(c))}</span></div>
+        <div class="pic-grid">${PW.opts.map((o) => `<button class="pic-opt ${done ? (o.id === c.id ? "right" : o.id === PW.pick ? "wrong" : "") : ""}" data-act="pic-pick" data-id="${esc(o.id)}" aria-label="${esc(o.en)}" ${done ? "disabled" : ""}>${pictureImg(o, "photo opt")}</button>`).join("")}</div>${verdict}</section>`;
+    }
+    return `<section class="flash narrow stack" style="gap:16px">${head}<div class="eyebrow">Name this in ${L().name}</div>${pictureImg(c)}
+      <input type="text" id="pic-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type it from memory" value="${esc(PW.val || "")}" ${done ? "disabled" : ""} aria-label="Your answer">
+      ${done ? verdict : `<div class="btn-row"><button class="btn" data-act="pic-check">Check</button><button class="btn ghost" data-act="pic-check">I don't know</button></div>`}</section>`;
+  }
+  return `<section class="stack"><h2>Picture Words</h2><p class="muted">Learn everyday words from real photos, without going through English.</p></section>
+    <section class="sets">${PICTURE_SETS.map((set) => { const items = list.filter((c) => c.cat === set.id), cover = items.find((c) => c.en === set.cover), started = items.filter((c) => st(c.id).b > 0).length; return `<article class="set-card">${pictureImg(cover)}<div class="pic-body"><div class="row between"><h3>${set.title}</h3><span class="small muted">${started} of ${items.length}</span></div><div class="track"><i style="width:${Math.round((started / items.length) * 100)}%"></i></div><div class="btn-row"><button class="btn small" data-act="pic-learn" data-id="${set.id}">Learn</button><button class="btn ghost small" data-act="pic-quiz" data-id="${set.id}">Quiz</button></div></div></article>`; }).join("")}</section>
+    <p class="small muted">Photos are from Wikimedia Commons, credited on each photo, and need a connection the first time they load.</p>`;
+}
+function picRound() {
+  const c = PW.q[PW.i], all0 = pictures().filter((x) => x.id !== c.id);
+  const same = shuffle(all0.filter((x) => x.cat === c.cat)).slice(0, 3);
+  PW.type = PW.i % 2 ? "name" : "pick"; PW.res = null; PW.pick = null; PW.val = "";
+  PW.opts = shuffle([c, ...same]);
+}
+function startPicQuiz(cat) {
+  const t = todayNum(), set = pictures().filter((c) => c.cat === cat);
+  const order = shuffle(set).sort((a, b) => { const x = st(a.id), y = st(b.id); return (x.b ? Memory.recall(x, t) : 0.5) - (y.b ? Memory.recall(y, t) : 0.5); });
+  PW = { mode: "quiz", cat, q: order.slice(0, 10), i: 0, right: 0 }; picRound(); render(); scrollTo(0, 0);
+}
+function picResult(g) { const c = PW.q[PW.i]; PW.res = g; if (g !== "bad") PW.right++; mark(c, g); render(); setTimeout(() => $("#pic-next")?.focus(), 0); }
+function picNext() {
+  PW.i++;
+  if (PW.i >= PW.q.length) PW = { mode: "done", cat: PW.cat, right: PW.right, total: PW.q.length };
+  else picRound();
+  render(); scrollTo(0, 0); setTimeout(() => $("#pic-input")?.focus(), 0);
+}
 function teste() {
   if (!D) return `<section class="result narrow"><div class="stack"><h1>Find your level</h1><p class="muted">Twenty questions at most, in four rounds. It stops when the questions get too hard, and "I don't know" is a fine answer.</p></div><button class="btn wide" data-act="test">Start the ${esc(L().name)} test</button><a class="link" href="#hoje" style="display:flex;align-items:center;justify-content:center">Not now</a></section>`;
   if (D.done) return `<section class="result narrow"><div class="stack"><div class="eyebrow">Your ${esc(L().name)} level</div><h1>${esc(P().level)}</h1><p class="muted">${esc(LEVEL_NOTE[P().level])}</p></div>
@@ -825,7 +876,7 @@ function teste() {
     <div class="opts">${it.options.map((o) => `<button data-act="answer" data-v="${esc(o)}">${esc(o)}</button>`).join("")}<button data-act="answer" data-v="" class="muted">I don't know</button></div></section>`;
 }
 
-const VIEWS = { hoje, perfil, conversa: conversaView, cartoes, ponte, sons, teste };
+const VIEWS = { hoje, perfil, fotos, conversa: conversaView, cartoes, ponte, sons, teste };
 function render() {
   chrome();
   if (!S.onboarded || homeOpen) { $("#view").innerHTML = welcome(); return; }
@@ -878,6 +929,12 @@ document.addEventListener("click", (e) => {
     "text-size"() { S.textSize = d.v; save(); render(); },
     lead() { S.lead = d.v; C.accent = null; save(); render(); },
     say() { speak(d.t, d.v); },
+    "pic-learn"() { PW = { mode: "learn", cat: d.id }; render(); scrollTo(0, 0); },
+    "pic-quiz"() { startPicQuiz(d.id); },
+    "pic-home"() { PW = null; render(); scrollTo(0, 0); },
+    "pic-pick"() { PW.pick = d.id; picResult(d.id === PW.q[PW.i].id ? "good" : "bad"); },
+    "pic-check"() { const v = $("#pic-input").value; PW.val = v; picResult(grade(v, accepted(PW.q[PW.i]))); },
+    "pic-next"() { picNext(); },
     "mission-done"() { missionDone(); },
     "mission-skip"() { MS.skip++; render(); },
     reminders() { setReminders(!S.reminders); },
@@ -939,6 +996,8 @@ document.addEventListener("keydown", (e) => {
   else if (id === "card-input" && !R.rev) { e.preventDefault(); checkCard(); }
   else if (id === "next-card") { e.preventDefault(); nextCard(); }
   else if (id === "pq-input") { e.preventDefault(); if (!PQ.res) pqCheck(); }
+  else if (id === "pic-input" && PW && PW.res == null) { e.preventDefault(); PW.val = e.target.value; picResult(grade(PW.val, accepted(PW.q[PW.i]))); }
+  else if (id === "pic-next") { e.preventDefault(); picNext(); }
 });
 document.addEventListener("change", (e) => {
   const id = e.target.id;
@@ -949,6 +1008,7 @@ document.addEventListener("change", (e) => {
   if (id === "photo-input" && e.target.files[0]) photoLesson(e.target.files[0]);
   if (id === "profile-name") { S.name = e.target.value.trim(); save(); chrome(); }
 });
+document.addEventListener("error", (e) => { if (e.target.tagName === "IMG") e.target.classList.add("broken"); }, true);
 document.addEventListener("input", (e) => {
   if (e.target.id === "vocab-filter") { vf = e.target.value; $("#vocab-body").innerHTML = vocabRows(); }
   if (e.target.id === "chat-input") C.draft = e.target.value;
