@@ -13,7 +13,7 @@ const LEVEL_NOTE = {
 };
 const ERR = { spanish: "Spanish carryover", gender: "Gender", verb: "Verb forms", prep: "Prepositions, contractions", vocab: "Word choice", spelling: "Spelling, accents" };
 const blankProfile = () => ({ cards: {}, custom: [], log: {}, errs: {}, ff: { r: 0, t: 0 }, level: null, updated: 0 });
-const blank = () => ({ v: 2, updated: 0, onboarded: false, name: "", lang: "pt", lead: "auto", lisbon: "2027-06-01", slow: false, auto: false, profiles: { pt: blankProfile(), fr: blankProfile() } });
+const blank = () => ({ v: 2, updated: 0, onboarded: false, name: "", textSize: "standard", lang: "pt", lead: "auto", lisbon: "2027-06-01", slow: false, auto: false, profiles: { pt: blankProfile(), fr: blankProfile() } });
 
 function fromStorage() {
   try {
@@ -282,10 +282,10 @@ function answerTest(value) {
   const item = D.items[D.i];
   if (value === item.a) D.right++;
   D.i++; D.reveal = false;
-  if (D.i < D.items.length) { render(); return; }
+  if (D.i < D.items.length) { render(); scrollTo(0, 0); return; }
   if (D.right >= 4) {
     D.passed++;
-    if (D.stage < L().diagnostic.length - 1) { D.stage++; D.i = 0; D.right = 0; D.items = stageItems(D.stage); render(); return; }
+    if (D.stage < L().diagnostic.length - 1) { D.stage++; D.i = 0; D.right = 0; D.items = stageItems(D.stage); render(); scrollTo(0, 0); return; }
   }
   D.done = true; P().level = LEVELS[D.passed]; save(); render();
 }
@@ -306,11 +306,12 @@ const TAB_IDS = ["hoje", "conversa", "cartoes", "ponte", "sons"];
 let tab = "hoje", pSeg = "es", restoreArmed = false, welcomeMode = "signin", welcomeErr = "", welcomeBusy = false, welcomeNote = "", homeOpen = false;
 const fromHash = () => { const h = location.hash.slice(1); return TAB_IDS.includes(h) || h === "teste" || h === "perfil" ? h : "hoje"; };
 tab = fromHash();
-window.addEventListener("hashchange", () => { homeOpen = false; tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { homeOpen = false; tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); $("#view").focus({ preventScroll: true }); });
 
 function chrome() {
   document.documentElement.dataset.lang = S.lang;
   document.documentElement.lang = S.lang === "fr" ? "fr" : "pt";
+  document.documentElement.dataset.size = S.textSize || "standard";
   document.body.dataset.tab = tab;
   const landing = !S.onboarded || homeOpen, inTest = tab === "teste";
   $("#top").hidden = landing;
@@ -395,7 +396,8 @@ function perfil() {
     <label class="field">Your name<input type="text" id="profile-name" autocomplete="given-name" value="${esc(S.name)}"></label>
     <div class="stack" style="gap:6px"><h3>Portuguese forms</h3><p class="small muted">Auto shows Brazil first until May 1, 2027, then Portugal.</p><div class="seg" role="group" aria-label="Forms shown first">${[["auto", "Auto"], ["br", "Brazil"], ["pt", "Portugal"]].map((o) => `<button data-act="lead" data-v="${o[0]}" aria-pressed="${S.lead === o[0]}">${o[1]}</button>`).join("")}</div>
       <label class="field">Lisbon arrival<input type="date" id="lisbon-date" value="${esc(S.lisbon)}"></label></div>
-    <label class="row small" style="gap:8px"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label>
+    <div class="stack" style="gap:6px"><h3>Text size</h3><p class="small muted">Standard follows your iPhone's text size setting.</p><div class="seg" role="group" aria-label="Text size">${[["standard", "Standard"], ["large", "Large"], ["largest", "Largest"]].map((o) => `<button data-act="text-size" data-v="${o[0]}" aria-pressed="${(S.textSize || "standard") === o[0]}">${o[1]}</button>`).join("")}</div></div>
+    <label class="check"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label>
     ${Account.enabled ? `<div class="stack" style="gap:6px"><h3>Account</h3>${Account.signedIn
       ? `<p class="small muted">${syncState === "waiting" ? "Your latest changes will sync when you're back online." : "Your progress follows your account."}</p><div><button class="btn ghost small" data-act="sign-out">Sign out</button></div>`
       : `<p class="small muted">Sign in to keep your progress across devices.</p><div><button class="btn small" data-act="show-signin">Sign in</button></div>`}</div>` : ""}
@@ -413,12 +415,12 @@ function conversaView() {
   <section class="composer">
     ${Account.signedIn || getPass() ? "" : `<div class="notice stack" style="gap:7px">${Account.enabled ? `<span>Sign in to turn on your partner.</span><div><button class="btn small" data-act="show-signin">Sign in</button></div>` : `<label for="pass-inline">Enter your app passcode to turn on your partner.</label><div class="row"><input type="password" id="pass-inline" autocomplete="off" style="flex:1;min-width:0"><button class="btn small" data-act="save-pass" data-src="pass-inline">Save</button></div>`}</div>`}
     <p id="chat-err" class="error" role="alert" hidden></p>
-    <textarea id="chat-input" rows="2" placeholder="${esc(lang.placeholder)}" aria-label="Your reply">${esc(C.draft)}</textarea>
-    <div class="row between"><div class="row" id="chat-btns"></div><label class="small muted row" style="gap:6px"><input type="checkbox" id="auto-say" ${S.auto ? "checked" : ""}> Read replies aloud</label></div>
+    <div class="send-row"><textarea id="chat-input" rows="1" lang="${S.lang}" enterkeyhint="send" placeholder="${esc(lang.placeholder)}" aria-label="Your reply">${esc(C.draft)}</textarea><div id="chat-send"></div></div>
+    <div class="chat-tools"><div id="chat-btns" class="row"></div><label class="check muted"><input type="checkbox" id="auto-say" ${S.auto ? "checked" : ""}> Read aloud</label></div>
   </section>
   <aside class="c-side">
     <div class="c-scenes stack" style="gap:6px"><h3 class="desk">Scenes</h3><div class="scenes">${lang.scenarios.map((s) => `<button data-act="scene" data-id="${s.id}" aria-pressed="${s.id === C.sc}">${esc(s.t)}</button>`).join("")}</div>${C.sc === "livre" || C.sc === "libre" ? `<input type="text" id="free-topic" placeholder="Topic, such as music or Boston" value="${esc(C.custom)}" aria-label="Conversation topic">` : ""}</div>
-    <div class="c-phrases stack"><h3>Useful phrases</h3><p class="small muted phone-only">To speak your reply, tap the mic on your keyboard with ${esc(lang.name)} added as a keyboard language.</p><p class="small muted desk">To speak on a Mac, press the dictation key or the Fn key twice, with ${esc(lang.name)} set as your dictation language.</p><div>${sc().ph.map((p) => `<div class="block"><div class="small muted">${esc(p[0])}</div>${forms(phraseItem(p))}</div>`).join("")}</div></div>
+    <div class="c-phrases stack"><h3>Useful phrases</h3><p class="small muted">Stuck on a word? Write it in Spanish and your partner will give you the ${esc(lang.name)}.</p><p class="small muted phone-only">To speak your reply, tap the mic on your keyboard with ${esc(lang.name)} added as a keyboard language.</p><p class="small muted desk">To speak on a Mac, press the dictation key or the Fn key twice, with ${esc(lang.name)} set as your dictation language.</p><div>${sc().ph.map((p) => `<div class="block"><div class="small muted">${esc(p[0])}</div>${forms(phraseItem(p))}</div>`).join("")}</div></div>
   </aside>
   </div>`;
 }
@@ -442,7 +444,11 @@ function renderChat() {
   box.innerHTML = h;
   const e = $("#chat-err"); if (e) { e.hidden = !C.err; e.textContent = C.err; }
   const b = $("#chat-btns");
-  if (b) b.innerHTML = C.busy ? `<button class="btn small" data-act="stop">Stop</button>` : `<button class="btn small" data-act="send">Send</button><button class="btn ghost small" data-act="debrief" ${C.dbBusy ? "disabled" : ""}>Finish</button><button class="link small" data-act="restart">Restart</button>`;
+  if (b) b.innerHTML = `<button class="btn ghost small" data-act="debrief" ${C.dbBusy || C.busy ? "disabled" : ""}>Finish</button><button class="btn ghost small" data-act="restart" ${C.busy ? "disabled" : ""}>Restart</button>`;
+  const sendBox = $("#chat-send");
+  if (sendBox) sendBox.innerHTML = C.busy ? `<button class="btn" data-act="stop">Stop</button>` : `<button class="btn" data-act="send">Send</button>`;
+  const last = box.lastElementChild;
+  if (last && C.turns.length > 1) last.scrollIntoView({ block: "nearest" });
 }
 
 function cartoes() {
@@ -454,9 +460,9 @@ function cartoes() {
     body = `<section class="stack" style="gap:16px"><div class="row between small muted"><span>${R.i + 1} / ${R.q.length}</span><button class="link small" data-act="quit">End session</button></div><div class="prog"><i style="width:${pct}%"></i></div>
       <div class="eyebrow">${c.fix ? "Correct this" : c.tag === "class" ? "From class" : `Say it in ${L().name}`}</div><div class="prompt">${esc(c.en)}</div>
       ${c.es ? `<div class="muted"><span class="tag">ES</span>${esc(c.es)}</div>` : ""}
-      <input type="text" id="card-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type it from memory" value="${esc(R.val)}" ${r ? "disabled" : ""} aria-label="Your answer">
-      ${r ? `<div class="verdict ${r.g === "good" ? "good" : r.g === "accent" ? "warn" : "bad"}">${r.g === "good" ? (r.over ? "Counted as correct" : esc(L().correct)) : r.g === "accent" ? "Right, but check the accents" : "Not this time"}</div>${forms(c)}${c.note ? `<p class="muted small">${esc(c.note)}</p>` : ""}
-        <div class="row"><button class="btn" id="next-card" data-act="next">Next</button>${r.g === "bad" ? `<button class="btn ghost" data-act="override">I was right</button>` : ""}</div>` : `<div class="row"><button class="btn" data-act="check">Check</button><button class="btn ghost" data-act="check">I don't know</button></div>`}
+      <input type="text" id="card-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type it from memory" value="${esc(R.val)}" ${r ? "disabled" : ""} aria-label="Your answer">
+      ${r ? `<div role="status" class="verdict ${r.g === "good" ? "good" : r.g === "accent" ? "warn" : "bad"}">${r.g === "good" ? (r.over ? "Counted as correct" : esc(L().correct)) : r.g === "accent" ? "Right, but check the accents" : "Not this time"}</div>${forms(c)}${c.note ? `<p class="muted small">${esc(c.note)}</p>` : ""}
+        <div class="btn-row"><button class="btn" id="next-card" data-act="next">Next</button>${r.g === "bad" ? `<button class="btn ghost" data-act="override">I was right</button>` : ""}</div>` : `<div class="btn-row"><button class="btn" data-act="check">Check</button><button class="btn ghost" data-act="check">I don't know</button></div>`}
     </section>`;
   } else {
     const q = queue(), due = dueCards().length;
@@ -476,7 +482,7 @@ function ponte() {
   const seg = two ? `<div class="seg" role="group" aria-label="Bridge type"><button data-act="pseg" data-v="es" aria-pressed="${pSeg === "es"}">From Spanish</button><button data-act="pseg" data-v="bp" aria-pressed="${pSeg === "bp"}">Brazil and Portugal</button></div>` : "";
   if (pSeg === "es") {
     return `<section class="stack"><h2>From Spanish</h2><p class="muted">Most Spanish words reach ${lang.name} through regular changes. Learn the changes, then learn where the guess fails.</p>${seg}</section>
-    <div class="two"><section class="stack"><div class="eyebrow">Predict the word</div><div class="prompt">${esc(PQ.es)}</div><input type="text" id="pq-input" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(PQ.val)}" aria-label="Translation" ${PQ.res ? "disabled" : ""}>
+    <div class="two"><section class="stack"><div class="eyebrow">Predict the word</div><div class="prompt">${esc(PQ.es)}</div><input type="text" id="pq-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(PQ.val)}" aria-label="Translation" ${PQ.res ? "disabled" : ""}>
       ${PQ.res ? `<div class="verdict ${PQ.res === "bad" ? "bad" : PQ.res === "accent" ? "warn" : "good"}">${PQ.res === "bad" ? "Answer" : PQ.res === "accent" ? "Check the accent" : esc(lang.correct)}: ${esc(PQ.tr)}</div><div class="muted small">${esc(PQ.r)}</div><div><button class="btn small" data-act="pq-next">Next word</button></div>` : `<div><button class="btn small" data-act="pq-check">Check</button></div>`}</section>
     <section class="stack"><div class="eyebrow">False friend</div><div class="prompt">${esc(FQ.f[0])}</div><div class="muted small">It looks like: ${esc(FQ.f[1])}. It really means:</div>
       <div class="opts">${FQ.opts.map((o) => `<button data-act="ff-pick" data-v="${esc(o)}" class="${FQ.pick ? (o === FQ.f[2] ? "right" : o === FQ.pick ? "wrong" : "") : ""}" ${FQ.pick ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>
@@ -484,16 +490,16 @@ function ponte() {
     <section><h3>Sound rules</h3><div class="cols" style="margin-top:8px">${lang.rules.map((r) => `<div class="block"><b style="font-weight:600">${esc(r.t)}</b><div class="pairs">${r.ex.map((e) => `<span><i>${esc(e[0])}</i> → ${esc(e[1])}</span>`).join("")}</div><div class="muted small">${esc(r.n)}</div></div>`).join("")}</div></section>
     <section class="stack"><h3>Gender flips</h3><div class="pairs">${lang.genders.map((e) => `<span><i>${esc(e[0])}</i> → ${esc(e[1])}</span>`).join("")}</div></section>
     ${two ? "" : `<section><h3>Grammar that changes</h3><div class="cols" style="margin-top:8px">${lang.bridges.map(bridgeBlock).join("")}</div></section>`}
-    <section class="stack"><h3>False friends</h3><div class="scroll"><table><thead><tr><th>Word</th><th>Looks like</th><th>Means</th><th>Use instead</th></tr></thead><tbody>${lang.falseFriends.map((f) => `<tr><td><b>${esc(f[0])}</b></td><td>${esc(f[1])}</td><td>${esc(f[2])}</td><td class="muted">${esc(f[3])}</td></tr>`).join("")}</tbody></table></div></section>`;
+    <section class="stack"><h3>False friends</h3><div class="scroll"><table><thead><tr><th>Word</th><th>Looks like</th><th>Means</th><th>Use instead</th></tr></thead><tbody>${lang.falseFriends.map((f) => `<tr><td class="cell-title"><b>${esc(f[0])}</b></td><td data-label="Looks like">${esc(f[1])}</td><td data-label="Means">${esc(f[2])}</td><td class="muted" data-label="Use instead">${esc(f[3])}</td></tr>`).join("")}</tbody></table></div></section>`;
   }
   return `<section class="stack"><h2>Brazil and Portugal</h2><p class="muted">Use Brazilian forms in PORTUGUE 102 unless your instructor says otherwise. Use Portugal forms in Lisbon. People there will understand you either way while you switch.</p>${seg}</section>
     <section><h3>Grammar that changes</h3><div class="cols" style="margin-top:8px">${lang.bridges.map(bridgeBlock).join("")}</div></section>
-    <section class="stack"><h3>Words that change meaning</h3><div class="scroll"><table><thead><tr><th>Word</th><th>Brazil</th><th>Portugal</th><th>Note</th></tr></thead><tbody>${lang.traps.map((t) => `<tr><td><b>${esc(t[0])}</b></td><td>${esc(t[1])}</td><td>${esc(t[2])}</td><td class="muted">${esc(t[3])}</td></tr>`).join("")}</tbody></table></div></section>
+    <section class="stack"><h3>Words that change meaning</h3><div class="scroll"><table><thead><tr><th>Word</th><th>Brazil</th><th>Portugal</th><th>Note</th></tr></thead><tbody>${lang.traps.map((t) => `<tr><td class="cell-title"><b>${esc(t[0])}</b></td><td data-label="Brazil">${esc(t[1])}</td><td data-label="Portugal">${esc(t[2])}</td><td class="muted" data-label="Note">${esc(t[3])}</td></tr>`).join("")}</tbody></table></div></section>
     <section class="stack"><h3>Everyday vocabulary</h3><input type="text" id="vocab-filter" placeholder="Filter, such as bus or café" aria-label="Filter vocabulary" value="${esc(vf)}"><div class="scroll"><table><thead><tr><th>English</th><th>Brazil</th><th>Portugal</th></tr></thead><tbody id="vocab-body">${vocabRows()}</tbody></table></div></section>`;
 }
 const bridgeBlock = (b) => `<div class="block"><b style="font-weight:600">${esc(b.t)}</b><div class="small"><span class="tag">ES</span>${esc(b.es)}</div>${forms(b)}<div class="muted small">${esc(b.n)}</div></div>`;
 let vf = "";
-function vocabRows() { const q = clean(vf); return L().cards.filter((c) => c.pt && c.pt !== c.br && ["city", "food", "tech", "school", "sport", "talk"].includes(c.tag)).filter((c) => !q || clean(`${c.en} ${c.br} ${c.pt} ${c.es}`).includes(q)).map((c) => `<tr><td>${esc(c.en)}</td><td><div class="line">${say(c.br, "br")}<span>${esc(c.br)}</span></div></td><td><div class="line">${say(c.pt, "pt")}<span>${esc(c.pt)}</span></div></td></tr>`).join(""); }
+function vocabRows() { const q = clean(vf); return L().cards.filter((c) => c.pt && c.pt !== c.br && ["city", "food", "tech", "school", "sport", "talk"].includes(c.tag)).filter((c) => !q || clean(`${c.en} ${c.br} ${c.pt} ${c.es}`).includes(q)).map((c) => `<tr><td class="cell-title">${esc(c.en)}</td><td data-label="Brazil"><div class="line">${say(c.br, "br")}<span>${esc(c.br)}</span></div></td><td data-label="Portugal"><div class="line">${say(c.pt, "pt")}<span>${esc(c.pt)}</span></div></td></tr>`).join(""); }
 
 function sons() {
   const fr = S.lang === "fr", codes = fr ? ["fr"] : ["br", "pt"], names = { br: "Brazil", pt: "Portugal", fr: "France" };
@@ -501,7 +507,7 @@ function sons() {
   const res = fr ? [["RFI Français facile", "https://francaisfacile.rfi.fr/", "Free news audio and exercises from A1 to B2."], ["France Inter", "https://www.radiofrance.fr/franceinter", "Real radio from France."], ["Easy French", "https://www.youtube.com/results?search_query=easy+french", "Street interviews on YouTube, with subtitles."]]
     : [["Practice Portuguese", "https://www.practiceportuguese.com/blog/learn-european-portuguese-free/", "Free short dialogues and a podcast, in European Portuguese."], ["RTP Play", "https://www.rtp.pt/play/", "TV and radio from Portugal's public broadcaster."], ["Easy Portuguese", "https://www.youtube.com/results?search_query=easy+portuguese", "Street interviews on YouTube, with subtitles."]];
   return `<section class="stack"><h2>Sounds</h2><p class="muted">Listen, repeat out loud, then compare. If you hear nothing, check your iPhone's silent switch.</p>
-    <label class="row small" style="gap:6px"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label><p class="small muted">${esc(voiceNote)}</p></section>
+    <label class="check"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label><p class="small muted">${esc(voiceNote)}</p></section>
     <section class="cols">${L().sounds.map((s) => `<div class="block"><h3>${esc(s.t)}</h3><p class="muted small">${esc(s.trap)}</p>${fr ? `<p class="small">${esc(s.d)}</p>` : `<p class="small"><span class="tag br">BR</span>${esc(s.br)}</p><p class="small"><span class="tag pt">PT</span>${esc(s.pt)}</p>`}<div class="stack" style="gap:5px;margin-top:4px">${s.w.map((w) => `<div class="line">${codes.map((c) => say(w, c)).join("")}<span>${esc(w)}</span></div>`).join("")}</div></div>`).join("")}</section>
     <section class="stack"><h3>Real speech</h3><div class="list">${res.map((r) => `<a class="rowlink" href="${r[1]}" rel="noopener"><span>${esc(r[0])}</span><span>${esc(r[2])}</span></a>`).join("")}</div></section>`;
 }
@@ -568,6 +574,7 @@ document.addEventListener("click", (e) => {
     guest() { afterEntry(); },
     "show-signin"() { homeOpen = true; render(); scrollTo(0, 0); },
     async "sign-out"() { await signOut(); syncState = ""; homeOpen = true; render(); scrollTo(0, 0); },
+    "text-size"() { S.textSize = d.v; save(); render(); },
     lead() { S.lead = d.v; C.accent = null; save(); render(); },
     say() { speak(d.t, d.v); },
     reveal() { D.reveal = true; render(); },
@@ -638,6 +645,12 @@ document.addEventListener("input", (e) => {
 });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pullNow(); else if (Account.signedIn && syncTimer) pushNow(); });
 window.addEventListener("online", () => pushNow());
+const typing = (t) => t && /INPUT|TEXTAREA/.test(t.tagName) && !["checkbox", "date"].includes(t.type);
+let typingTimer;
+document.addEventListener("focusin", (e) => { clearTimeout(typingTimer); document.body.classList.toggle("typing", !!typing(e.target)); });
+/* The delay keeps the layout still so a tap on Send lands where it started. */
+document.addEventListener("focusout", () => { clearTimeout(typingTimer); typingTimer = setTimeout(() => document.body.classList.remove("typing"), 250); });
+document.addEventListener("mousedown", (e) => { if (e.target.closest("#chat-send")) e.preventDefault(); });
 
 /* ---------- start ---------- */
 render();

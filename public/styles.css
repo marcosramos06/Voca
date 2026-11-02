@@ -12,7 +12,7 @@
   --pt:#9dbbff;--pt-soft:#1d2a47;--fr:#7fd8b8;--fr-soft:#17332a;--on-lang:#101214;color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{min-height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 var(--font);-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-weight:400;font-size:1.06rem;line-height:1.5;touch-action:manipulation;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
 [hidden]{display:none!important}
 img{max-width:100%}
 h1,h2,h3{font-weight:300;line-height:1.08;letter-spacing:-.02em;margin:0;text-wrap:balance}
@@ -40,7 +40,7 @@ button{cursor:pointer}
 .btn.wide{width:100%}.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn.small{min-height:44px;padding:0 14px;font-size:.95rem}
 .link{border:0;background:none;padding:0;min-height:44px;color:var(--lang);font-weight:600;text-decoration:none}
-input[type=text],input[type=email],input[type=password],input[type=date],textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;font-size:16px}
+input[type=text],input[type=email],input[type=password],input[type=date],textarea{width:100%;background:var(--bg);border:1px solid var(--muted);border-radius:8px;padding:12px;font-size:max(16px,1.06rem);min-height:52px}
 textarea{resize:vertical}
 label.field{display:grid;gap:5px;font-size:.92rem;color:var(--muted)}
 .list{display:grid;border-bottom:1px solid var(--line)}
@@ -75,7 +75,8 @@ label.field{display:grid;gap:5px;font-size:.92rem;color:var(--muted)}
 .m.a{font-size:1.32rem;line-height:1.32}.m.u{font-size:1.08rem;color:var(--muted);padding-left:26px}
 .m details{font-size:.93rem;color:var(--muted);margin-top:4px}
 .fix{padding-left:26px;overflow-wrap:anywhere}.fix s{color:var(--muted)}.fix strong{color:var(--lang);font-weight:600}
-.composer{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);padding-block:12px;display:grid;gap:8px}
+main:focus{outline:none}
+.composer{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);padding-block:12px;display:grid;gap:8px}
 .try{display:flex;gap:6px;flex-wrap:wrap}.try button{border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 11px;min-height:44px;font-size:.95rem;color:var(--lang);text-align:left}
 /* cards and tests */
 .prompt{font-weight:300;letter-spacing:-.02em;font-size:clamp(2.1rem,8vw,3rem);line-height:1.1;overflow-wrap:anywhere}
@@ -112,7 +113,7 @@ nav a[aria-current="page"]{color:var(--lang);font-weight:700}
 
 /* ---------- Mac and larger screens ---------- */
 @media (min-width:900px){
-  body{font-size:16px}
+  body{font-size:1rem}
   #root{min-height:100vh}
   .top{position:fixed;left:0;top:0;bottom:0;width:232px;max-width:none;margin:0;z-index:30;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:18px;padding:22px 16px;background:var(--soft);border-right:1px solid var(--line)}
   .brand{font-size:1.5rem;padding-left:10px}
@@ -159,3 +160,66 @@ nav a[aria-current="page"]{color:var(--lang);font-weight:700}
 .stack>.seg,.settings .seg{justify-self:start}
 .settings>*{max-width:520px}
 .rowlink{align-items:center}
+
+/* ---------- comfortable touch and reading ---------- */
+.send-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.send-row textarea{resize:none;max-height:9rem}
+.chat-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
+.check input{width:24px;height:24px;margin:0;accent-color:var(--lang);flex:none}
+details summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+#msgs>*{scroll-margin-bottom:210px}
+button:active,a:active,.rowlink:active{opacity:.65}
+.btn:disabled:active{opacity:.5}
+@media (max-width:899px){
+  html{font-size:106.25%}
+  h2{font-size:1.75rem}h3{font-size:1.25rem}
+  .small{font-size:.97rem}.eyebrow{font-size:.92rem}.tag{font-size:.9rem}th{font-size:.9rem}
+  .stats span{font-size:.92rem}.result h1,.landing h1{font-size:clamp(3rem,13vw,4.2rem)}
+  .wrap{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:12px calc(120px + env(safe-area-inset-bottom,0px));gap:28px}
+  .top{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+  .brand{min-height:44px;display:flex;align-items:center;font-size:1.3rem}
+  .seg button{min-height:44px;min-width:54px;font-size:1rem}
+  .avatar{width:44px;height:44px}.avatar.big{width:68px;height:68px}
+  .btn{min-height:56px;font-size:1.06rem;border-radius:8px}.btn.small{min-height:48px;font-size:1rem;padding:0 16px}
+  .link{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:48px;font-size:1rem}
+  .say{width:44px;height:44px}.say svg{width:18px;height:18px}
+  .line{gap:10px}.forms{gap:6px}
+  .rowlink{min-height:72px;padding:18px 0;font-size:1.25rem}.rowlink .ico{width:24px;height:24px}.rowlink span:last-child{font-size:1rem}
+  .hero{padding:26px 20px}
+  .wall{grid-template-columns:repeat(auto-fill,minmax(19px,1fr));gap:4px}
+  .scenes{gap:8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}.scenes button{min-height:48px;font-size:1rem;padding:0 14px;scroll-snap-align:start;border-radius:8px}
+  .try button{min-height:48px;font-size:1rem;border-radius:8px}
+  .msgs{min-height:180px;gap:20px}.m.a{font-size:1.32rem}.m.u{font-size:1.1rem;padding-left:18px}.fix{padding-left:18px}
+  .composer{padding-block:10px}
+  .send-row textarea{min-height:56px}
+  .chat-tools .btn.small{min-height:44px}
+  .opts button{min-height:64px;font-size:1.1rem;padding:14px 16px;border-radius:8px}
+  .langs button{min-height:76px;font-size:1.5rem}
+  .field,label.field{font-size:1rem}
+  .notice{font-size:1rem}
+  .bar{font-size:1rem}
+  .lang-row{min-height:72px}
+  input[type=date]{min-height:56px}
+  nav a{padding:8px 2px 6px;min-height:68px;max-width:none;font-size:clamp(13.5px,.82rem,15px);align-content:center}nav .ico{width:25px;height:25px}
+  nav{padding-left:max(2px,env(safe-area-inset-left,0px));padding-right:max(2px,env(safe-area-inset-right,0px))}
+  body.typing nav{display:none}
+  body.typing .composer{bottom:env(safe-area-inset-bottom,0px)}
+  body.typing .chat-tools{display:none}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px));font-size:1rem;padding:11px 15px}
+  .scroll{overflow-x:visible}
+  table,tbody,tr,td{display:block;width:100%}thead{position:absolute;left:-9999px}
+  table{font-size:1rem}tr{padding:14px 0;border-top:1px solid var(--line)}td{border:0;padding:3px 0}
+  td[data-label]::before{content:attr(data-label);display:block;font-size:.88rem;font-weight:600;color:var(--muted)}
+  .cell-title{font-size:1.15rem;font-weight:600;padding-bottom:5px}
+  .pairs{gap:6px 16px}.pairs span{white-space:normal}
+}
+/* Standard follows the iPhone's text size setting. */
+@media (hover:none) and (pointer:coarse){
+  @supports (font:-apple-system-body){html{font:-apple-system-body}}
+}
+html[data-size="large"]{font-size:120%}
+html[data-size="largest"]{font-size:140%}
+@media (prefers-contrast:more){:root{--muted:#3f444c;--line:#8a9099}}
+@media (prefers-contrast:more) and (prefers-color-scheme:dark){:root{--muted:#d0d4da;--line:#6c727b}}

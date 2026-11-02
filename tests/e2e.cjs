@@ -129,6 +129,59 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     const backup = await p.inputValue("#backup-text");
     assert.ok(backup.includes("profiles"));
 
+    // comfortable touch targets and readable text on every phone screen
+    const audit = (where) => p.evaluate((where) => {
+      const out = [];
+      const visible = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== "hidden"; };
+      for (const e of document.querySelectorAll("button,a,summary,label.check,input:not([type=checkbox]),textarea")) {
+        if (!visible(e) || e.closest("thead")) continue;
+        const r = e.getBoundingClientRect();
+        if (Math.round(r.height) < 44 || Math.round(r.width) < 44) out.push(`${where} target ${e.tagName}.${e.className} "${(e.innerText || e.getAttribute("aria-label") || "").slice(0, 20)}" ${Math.round(r.width)}x${Math.round(r.height)}`);
+      }
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walk.nextNode()) {
+        const n = walk.currentNode, e = n.parentElement;
+        if (!n.textContent.trim() || !e || !visible(e) || ["SCRIPT", "STYLE"].includes(e.tagName) || e.closest("thead")) continue;
+        const min = e.closest("nav") ? 13.5 : 15, size = parseFloat(getComputedStyle(e).fontSize);
+        if (size < min) out.push(`${where} text ${size}px "${n.textContent.trim().slice(0, 20)}"`);
+      }
+      return out;
+    }, where);
+    let issues = [];
+    for (const lang of ["fr", "pt"]) {
+      await p.evaluate((l) => { S.lang = l; R = null; render(); }, lang);
+      for (const t of ["hoje", "perfil", "conversa", "cartoes", "ponte", "sons"]) {
+        await p.evaluate((x) => (location.hash = x), t); await p.waitForTimeout(120);
+        issues = issues.concat(await audit(`${lang}/${t}`));
+        if (t === "ponte" && lang === "pt") { await p.click('[data-act="pseg"][data-v="bp"]'); await p.waitForSelector("#vocab-body tr"); issues = issues.concat(await audit("pt/ponte-bp")); await p.screenshot({ path: `${shots}/a11y-ponte.png` }); }
+        assert.equal(await overflow(p), false, `overflow ${lang}/${t}`);
+      }
+    }
+    await p.evaluate(() => (location.hash = "cartoes")); await p.waitForTimeout(100);
+    await p.click('[data-act="review"]'); issues = issues.concat(await audit("card")); await p.screenshot({ path: `${shots}/a11y-card.png` });
+    await p.click('[data-act="quit"]');
+    await p.evaluate(() => { startTest(); }); await p.waitForTimeout(100); issues = issues.concat(await audit("test")); await p.screenshot({ path: `${shots}/a11y-test.png` });
+    await p.evaluate(() => (location.hash = "hoje")); await p.waitForTimeout(100);
+    await p.evaluate(() => { homeOpen = true; render(); }); issues = issues.concat(await audit("landing"));
+    await p.evaluate(() => { homeOpen = false; render(); });
+    if (issues.length) console.log([...new Set(issues.map((x) => x.replace(/^\S+ /, "")))].join("\n"));
+    assert.deepEqual(issues, [], "accessibility issues");
+
+    // largest text keeps every screen usable
+    await p.evaluate(() => { S.textSize = "largest"; save(); render(); });
+    for (const t of ["hoje", "perfil", "conversa", "cartoes", "ponte", "sons"]) {
+      await p.evaluate((x) => (location.hash = x), t); await p.waitForTimeout(120);
+      assert.equal(await overflow(p), false, "largest text overflow on " + t);
+      if (t === "hoje" || t === "conversa") await p.screenshot({ path: `${shots}/a11y-largest-${t}.png` });
+    }
+    await p.evaluate(() => { S.textSize = "standard"; save(); render(); });
+    await p.evaluate(() => (location.hash = "conversa")); await p.waitForTimeout(100);
+    await p.screenshot({ path: `${shots}/a11y-chat.png` });
+    await p.focus("#chat-input"); await p.waitForTimeout(100);
+    assert.equal(await p.isVisible("#nav a"), false, "tab bar hides while typing");
+    await p.screenshot({ path: `${shots}/a11y-typing.png` });
+    await p.evaluate(() => document.activeElement.blur());
+
     // Mac width
     await p.setViewportSize({ width: 1280, height: 800 });
     for (const t of ["hoje", "perfil", "conversa", "cartoes", "ponte", "sons"]) {

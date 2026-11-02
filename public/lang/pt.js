@@ -242,7 +242,7 @@ LANGUAGES.pt={
   tabs:["Hoje","Conversa","Cartões","Ponte","Sons"],
   greet:(h)=>h<12?"Bom dia":h<19?"Boa tarde":"Boa noite",
   importFields:'{"en":"English prompt","es":"Spanish equivalent","br":"Brazilian Portuguese","pt":"European Portuguese, or empty if identical","note":"short tip, or empty"}',
-  placeholder:"Responda em português. Stuck on a word? Write it in Spanish.",
+  placeholder:"Responda em português",
   correct:"Certo!",
   sample:{said:"Yo voy a comer",better:"Eu vou comer",why:"Ir takes no a before the verb.",line:"Yo voy a comer con mi amigo"},
   writePrompt:"Write two or three sentences in Portuguese about what you did last weekend.",

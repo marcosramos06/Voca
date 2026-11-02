@@ -237,7 +237,7 @@ LANGUAGES.fr = {
   greet: (h) => (h < 18 ? "Bonjour" : "Bonsoir"),
   variety: "standard France French as heard in Paris. Use tu or vous as the role says",
   importFields: '{"en":"English prompt","es":"Spanish equivalent","fr":"France French","note":"short tip, or empty"}',
-  placeholder: "Répondez en français. Stuck on a word? Write it in Spanish.",
+  placeholder: "Répondez en français",
   correct: "Bien joué !", start: "Un petit test ?",
   sample: { said: "Je veux", better: "Je voudrais", why: "Softer, and the natural way to order in French.", line: "Je veux un croissant, por favor" },
   writePrompt: "Write two or three sentences in French about what you did last weekend.",
