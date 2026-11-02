@@ -64,7 +64,7 @@ test("forwards a valid request and returns text", async () => {
 test("the phone cannot choose the model or token limit", async () => {
   await call({ ...good, tier: "x", model: "expensive", max_tokens: 99999 });
   assert.equal(seen.body.model, "claude-sonnet-5-5");
-  assert.equal(seen.body.max_tokens, 3000);
+  assert.equal(seen.body.max_tokens, 8000);
 });
 test("strips extra fields from messages", async () => {
   await call({ ...good, messages: [{ role: "user", content: "Oi", system: "x" }] });
