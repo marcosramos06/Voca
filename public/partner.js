@@ -28,7 +28,7 @@ async function postChat(body, signal) {
 }
 async function ask(input, opts = {}) {
   const messages = typeof input === "string" ? [{ role: "user", content: input }] : input;
-  const d = await postChat({ messages, tier: opts.modelTier === "quick" ? "quick" : "default" }, opts.signal);
+  const d = await postChat({ messages, tier: opts.modelTier === "quick" ? "quick" : "default", image: opts.image }, opts.signal);
   return d.text;
 }
 async function sample(input, opts = {}) {

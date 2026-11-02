@@ -29,6 +29,13 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
         if (q.method === "POST") { store.row = JSON.parse(raw); return s.end(); }
         return s.end(JSON.stringify(store.row ? [{ data: store.row.data }] : []));
       }
+      const asked = JSON.parse(raw || "{}"), last = (asked.messages || []).slice(-1)[0] || {};
+      if (Array.isArray(last.content)) {
+        store.photo = last.content[0];
+        return s.end(JSON.stringify({ content: [{ type: "text", text: JSON.stringify({ title: "O menu", summary: "A lunch menu.", cards: [{ en: "soup of the day", es: "sopa del día", br: "sopa do dia", pt: "", note: "" }, { en: "grilled sardines", es: "sardinas", br: "sardinhas grelhadas", pt: "", note: "" }], scene: { who: "a waiter", open: "Boa tarde! Já escolheu?" } }) }] }));
+      }
+      if (/weak spot/.test(typeof last.content === "string" ? last.content : "")) return s.end(JSON.stringify({ content: [{ type: "text", text: JSON.stringify([{ en: "I went home", es: "Fui a casa", br: "Fui para casa", pt: "", note: "" }]) }] }));
+      store.lastPrompt = (asked.messages || [])[0]?.content;
       s.end(JSON.stringify({ content: [{ type: "text", text: "Sure:\n```json\n" + reply + "\n```" }] }));
     });
   });
@@ -42,6 +49,15 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
   try {
     const ctx = await b.newContext({ ...devices["iPhone 13"], serviceWorkers: "allow" });
     await ctx.route("**/*", (r) => r.continue());
+    await ctx.addInitScript(() => {
+      window.__spoken = [];
+      window.SpeechRecognition = window.webkitSpeechRecognition = class {
+        start() { const self = this, say = window.__say || "Je voudrais un café"; setTimeout(() => { self.onresult({ results: [Object.assign([{ transcript: say, confidence: 0.61 }], { isFinal: true })] }); self.onend(); }, 30); }
+        abort() {} stop() {}
+      };
+      const real = speechSynthesis;
+      Object.defineProperty(window, "speechSynthesis", { value: { speak: (u) => { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 20); }, cancel() {}, getVoices: () => [], onvoiceschanged: null } });
+    });
     const p = await ctx.newPage(); watch(p);
     await p.goto("http://localhost:4598/");
     await p.waitForSelector("#auth-form");
@@ -100,12 +116,41 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     assert.equal(await p.textContent("#msgs .fix strong"), "s'il vous plaît");
     await p.click('[data-act="add-fix"]');
 
+    // hands-free talk: hears, sends, speaks the reply, then listens again until stopped
+    await p.evaluate(() => { window.__say = "Je voudrais un café"; });
+    await p.click('[data-act="talk"]');
+    await p.waitForFunction(() => window.__spoken.includes("Très bien. Et avec ceci ?"));
+    await p.waitForFunction(() => document.querySelectorAll("#msgs .m.u").length >= 2);
+    await p.click('[data-act="talk-stop"]');
+    assert.equal(await p.evaluate(() => T.on), false);
+    assert.match(store.lastPrompt, /speech recognition with 61% confidence/);
+    await p.waitForTimeout(200);
+    await p.screenshot({ path: `${shots}/talk-chat.png` });
+
     // recall in French
     await p.evaluate(() => (location.hash = "cartoes")); await p.waitForTimeout(100);
     await p.click('[data-act="review"]');
     await p.fill("#card-input", "wrong"); await p.keyboard.press("Enter"); await p.waitForSelector(".verdict");
     await p.screenshot({ path: `${shots}/6-card-fr.png` });
     await p.click('[data-act="next"]');
+
+    // weak-spot drill builds cards from recent corrections
+    await p.click('[data-act="quit"]').catch(() => {});
+    await p.evaluate(() => { location.hash = "cartoes"; R = null; render(); }); await p.waitForSelector('[data-act="drill"]');
+    await p.click('[data-act="drill"]');
+    await p.waitForFunction(() => P().custom.some((c) => c.tag === "focus"), null, { timeout: 5000 }).catch(() => {});
+
+    // photo lesson: a real image file becomes cards and a scene
+    await p.evaluate(() => { S.lang = "pt"; C.lang = null; render(); }); await p.waitForSelector("#photo-input");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAEklEQVR4nGP8z4APMOGVGbHSAEEsAROxCnMTAAAAAElFTkSuQmCC", "base64");
+    await p.setInputFiles("#photo-input", { name: "menu.png", mimeType: "image/png", buffer: png });
+    await p.waitForSelector('[data-act="photo-scene"]');
+    assert.equal(store.photo.source.media_type, "image/jpeg");
+    await p.screenshot({ path: `${shots}/photo-result.png` });
+    assert.equal(await p.evaluate(() => P().custom.filter((c) => c.tag === "photo").length), 2);
+    await p.click('[data-act="photo-scene"]'); await p.waitForSelector("#msgs .m.a");
+    assert.match(await p.textContent("#msgs .m.a"), /Já escolheu/);
+    await p.evaluate(() => { S.lang = "fr"; C.lang = null; location.hash = "cartoes"; render(); });
 
     // Portuguese keeps both country forms and its own progress
     await p.click('[data-act="lang"][data-v="pt"]');
@@ -118,6 +163,12 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     await p.click('[data-act="pseg"][data-v="bp"]'); await p.waitForSelector("#vocab-body tr");
     assert.equal(await overflow(p), false, "overflow pt ponte");
     await p.screenshot({ path: `${shots}/8-ponte-pt.png` });
+
+    // pronunciation check on one word
+    await p.evaluate(() => { window.__say = "vida"; S.lang = "pt"; location.hash = "sons"; render(); }); await p.waitForSelector('[data-act="try-say"]');
+    await p.click('[data-act="try-say"]'); await p.waitForSelector(".ok-note");
+    await p.evaluate(() => { window.__say = "bida"; }); await p.click('[data-act="try-say"]');
+    await p.waitForFunction(() => /Heard "bida"/.test(document.body.innerText));
 
     // profile
     await p.click(".who"); await p.waitForSelector("#profile-name");

@@ -41,6 +41,12 @@ Use the same email as your Supabase account, because Supabase's built-in email s
 
 Free Supabase projects can pause after about a week of low activity. Your data is kept, and you can restore the project from its dashboard.
 
+## Speaking and photos
+
+Talk mode uses the browser's speech recognition, which works in Chrome and Safari on a Mac and usually in Safari tabs on an iPhone. It may not work in an app added to the iPhone Home Screen, so Voca falls back to keyboard dictation there. Pronunciation checks show whether speech recognition understood you. They are a guide, not a score.
+
+Photo lessons shrink the image on the device and send it to Claude through `api/chat.js`. Voca doesn't store the photo.
+
 ## Updating the app
 
 Changes pushed to `main` deploy automatically. The app loads the latest version each time it opens with a connection.
@@ -52,6 +58,8 @@ Changes pushed to `main` deploy automatically. The app loads the latest version 
 | Screens and logic | `public/app.js` |
 | Look and feel | `public/styles.css` |
 | Accounts and sync | `public/auth.js` |
+| Review schedule | `public/memory.js` |
+| Speech recognition | `public/voice.js` |
 | Partner connection | `public/partner.js` |
 | Server, models, limits | `api/chat.js` |
 | Offline behavior | `public/sw.js`, and raise `CACHE` when you change `SHELL` |

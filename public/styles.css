@@ -4,13 +4,15 @@
   --pt:#143b8c;--pt-soft:#e4ebf8;--fr:#145c47;--fr-soft:#dfefe8;--on-lang:#ffffff;
   --lang:var(--pt);--lang-soft:var(--pt-soft);--motif:url(/motif-pt.svg);--motif-size:56px;
   --radius:18px;--radius-s:12px;--shadow:0 1px 2px rgba(20,23,27,.05),0 8px 24px rgba(20,23,27,.06);
+  --pen:#c8281f;--pen-soft:#fdeeec;--rule:rgba(40,70,130,.1);--margin:rgba(200,40,31,.28);--sticky:#fff3a6;--sticky-ink:#463c00;
+  --hand:"Caveat","Bradley Hand","Segoe Print",cursive;
   --font:"Hanken Grotesk",-apple-system,"Segoe UI",system-ui,sans-serif;
 }
 :root[data-lang="fr"],[data-l="fr"]{--lang:var(--fr);--lang-soft:var(--fr-soft);--motif:url(/motif-fr.svg);--motif-size:48px}
 [data-l="pt"]{--lang:var(--pt);--lang-soft:var(--pt-soft);--motif:url(/motif-pt.svg);--motif-size:56px}
 @media (prefers-color-scheme:dark){:root{
   --bg:#0f1114;--soft:#191c21;--raised:#1f2329;--ink:#eef0f3;--muted:#a9b0bb;--line:#2d3138;--bad:#ff9d91;--good:#6fd9ae;--warn:#f0c36a;
-  --pt:#a9c3ff;--pt-soft:#1c2946;--fr:#86dcbd;--fr-soft:#163229;--on-lang:#0f1114;--shadow:none;color-scheme:dark}}
+  --pt:#a9c3ff;--pt-soft:#1c2946;--fr:#86dcbd;--fr-soft:#163229;--on-lang:#0f1114;--shadow:none;--pen:#ff9184;--pen-soft:#3a201e;--rule:rgba(255,255,255,.06);--margin:rgba(255,145,132,.3);--sticky:#e9d877;--sticky-ink:#3a3200;color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{min-height:100%}
 html{font-size:112.5%}
@@ -231,3 +233,30 @@ html[data-size="largest"]{font-size:146%}
 @media (min-width:900px){html[data-size="large"]{font-size:138%}html[data-size="largest"]{font-size:150%}}
 @media (prefers-contrast:more){:root{--muted:#3f444c;--line:#8a9099}}
 @media (prefers-contrast:more) and (prefers-color-scheme:dark){:root{--muted:#d0d4da;--line:#6c727b}}
+
+/* ---------- notebook touches ---------- */
+.fix s{display:block;color:var(--muted);text-decoration-color:var(--pen);text-decoration-thickness:2px}
+.fix strong{display:block;font-family:var(--hand);color:var(--pen);font-size:1.75rem;font-weight:700;line-height:1.15;letter-spacing:0}
+.fix{background:var(--pen-soft)}
+.fix .tag{margin-left:0}
+.flash{position:relative;background-color:var(--soft);background-image:linear-gradient(var(--rule) 1px,transparent 1px);background-size:100% 2.1rem;padding-left:46px}
+.flash::before{content:"";position:absolute;top:0;bottom:0;left:30px;width:1.5px;background:var(--margin);pointer-events:none}
+.verdict{font-family:var(--hand);font-size:2rem;line-height:1.1;transform:rotate(-1.5deg);transform-origin:left}
+.verdict.bad{color:var(--pen)}
+.sticky{background:var(--sticky);color:var(--sticky-ink);font-family:var(--hand);font-size:1.6rem;line-height:1.2;padding:14px 18px;border-radius:3px;transform:rotate(-.7deg);box-shadow:var(--shadow);justify-self:start;max-width:100%}
+.sticky b{font-weight:700}.sticky a{color:inherit;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;min-height:44px;min-width:44px;vertical-align:middle}
+/* ---------- talk mode ---------- */
+.talk-btn{gap:9px}.talk-btn .ico{width:24px;height:24px}
+.talk-bar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--lang-soft);border-radius:16px;padding:12px 14px}
+.talk-copy{display:grid;min-width:0}.talk-copy span{color:var(--muted);overflow-wrap:anywhere}
+.talk-wave{display:flex;gap:3px;align-items:center;height:30px}.talk-wave i{width:4px;height:12px;border-radius:2px;background:var(--lang)}
+.talk-bar[data-state="listening"] .talk-wave i:nth-child(1),.talk-bar[data-state="listening"] .talk-wave i:nth-child(5){height:12px}
+.talk-bar[data-state="listening"] .talk-wave i:nth-child(2),.talk-bar[data-state="listening"] .talk-wave i:nth-child(4){height:20px}
+.talk-bar[data-state="listening"] .talk-wave i:nth-child(3){height:28px}
+@media (prefers-reduced-motion:no-preference){@keyframes talk{50%{transform:scaleY(.45)}}.talk-bar[data-state="listening"] .talk-wave i,.talk-bar[data-state="speaking"] .talk-wave i{animation:talk .8s ease-in-out infinite}.talk-wave i:nth-child(2){animation-delay:.1s!important}.talk-wave i:nth-child(3){animation-delay:.2s!important}.talk-wave i:nth-child(4){animation-delay:.3s!important}.talk-wave i:nth-child(5){animation-delay:.4s!important}}
+/* ---------- photo and chart ---------- */
+.file-btn{cursor:pointer;position:relative;overflow:hidden}.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;min-height:0;font-size:0}
+.chart{width:100%;height:auto;display:block}.chart .axis{stroke:var(--line);stroke-width:1}.chart .trend{fill:none;stroke:var(--lang);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.chart .dot{fill:var(--lang)}
+.panel .stats div{background:var(--bg)}
+.grow{flex:1}.ok-note{color:var(--good);font-weight:600}
+@media (max-width:899px){.line:has(.grow){flex-wrap:wrap}.flash{padding-left:40px}.flash::before{left:26px}}

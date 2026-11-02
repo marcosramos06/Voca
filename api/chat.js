@@ -7,6 +7,7 @@ import { supabaseOrigin } from "./config.js";
 const API_URL = process.env.ANTHROPIC_API_URL || "https://api.anthropic.com/v1/messages";
 const MAX_MESSAGES = 24;
 const MAX_CHARS = 24000;
+const MAX_IMAGE_CHARS = 3_000_000; // About 2 MB once decoded.
 const TIERS = {
   quick: { model: process.env.MODEL_QUICK || "claude-haiku-5-5", maxTokens: 900 },
   default: { model: process.env.MODEL_DEFAULT || "claude-sonnet-5-5", maxTokens: 3000 },
@@ -68,6 +69,16 @@ export default async function handler(req, res) {
   // Only the server decides the model and the token limit.
   const tier = TIERS[body.tier === "quick" ? "quick" : "default"];
   const messages = body.messages.map(({ role, content }) => ({ role, content }));
+  if (body.image !== undefined) {
+    const { mediaType, data } = body.image || {};
+    if (mediaType !== "image/jpeg" || typeof data !== "string" || !/^[A-Za-z0-9+/=]+$/.test(data)) return res.status(400).json({ code: "bad_image" });
+    if (data.length > MAX_IMAGE_CHARS) return res.status(413).json({ code: "image_too_large" });
+    const last = messages[messages.length - 1];
+    last.content = [
+      { type: "image", source: { type: "base64", media_type: mediaType, data } },
+      { type: "text", text: last.content },
+    ];
+  }
 
   let upstream;
   try {

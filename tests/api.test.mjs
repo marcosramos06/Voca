@@ -106,6 +106,22 @@ test("accepts a Supabase address pasted with extra path", async () => {
   assert.equal((await call({ accessToken: "good", tier: "quick", messages: good.messages })).code, 200);
   process.env.SUPABASE_URL = original;
 });
+test("sends a valid photo to Claude as an image block before the text", async () => {
+  const r = await call({ ...good, tier: "default", image: { mediaType: "image/jpeg", data: "QUJD" } });
+  assert.equal(r.code, 200);
+  const content = seen.body.messages[0].content;
+  assert.equal(content[0].type, "image");
+  assert.equal(content[0].source.data, "QUJD");
+  assert.deepEqual(content[1], { type: "text", text: "Oi" });
+});
+test("rejects unsafe or oversized photos without calling Claude", async () => {
+  seen = null;
+  assert.equal((await call({ ...good, image: { mediaType: "text/html", data: "QUJD" } })).json.code, "bad_image");
+  assert.equal((await call({ ...good, image: { mediaType: "image/jpeg", data: "<script>" } })).json.code, "bad_image");
+  assert.equal((await call({ ...good, image: "x" })).json.code, "bad_image");
+  assert.equal((await call({ ...good, image: { mediaType: "image/jpeg", data: "A".repeat(3000001) } })).json.code, "image_too_large");
+  assert.equal(seen, null);
+});
 test("a bad token cannot fall back to no check", async () => {
   assert.equal((await call({ ...good, passcode: "", accessToken: "expired" })).code, 401);
 });
