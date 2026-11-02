@@ -291,25 +291,26 @@ async function submitWriting() {
 
 /* ---------- screens ---------- */
 const TAB_IDS = ["hoje", "conversa", "cartoes", "ponte", "sons"];
-let tab = "hoje", pSeg = "es", restoreArmed = false, welcomeMode = "signin", welcomeErr = "", welcomeBusy = false, welcomeNote = "";
+let tab = "hoje", pSeg = "es", restoreArmed = false, welcomeMode = "signin", welcomeErr = "", welcomeBusy = false, welcomeNote = "", homeOpen = false;
 const fromHash = () => { const h = location.hash.slice(1); return TAB_IDS.includes(h) || h === "teste" ? h : "hoje"; };
 tab = fromHash();
-window.addEventListener("hashchange", () => { tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { homeOpen = false; tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); });
 
 function chrome() {
   document.documentElement.dataset.lang = S.lang;
   document.documentElement.lang = S.lang === "fr" ? "fr" : "pt";
   document.body.dataset.tab = tab;
-  const landing = !S.onboarded, inTest = tab === "teste";
+  const landing = !S.onboarded || homeOpen, inTest = tab === "teste";
   $("#top").hidden = landing;
   $("#nav").hidden = landing || inTest;
   $("#view").className = "wrap" + (landing || inTest ? " bare" : "");
-  $("#top").innerHTML = `<a class="brand" href="#hoje">Voca</a><div class="seg" role="group" aria-label="Language">${Object.values(LANGUAGES).map((l) => `<button data-act="lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}">${l.code.toUpperCase()}</button>`).join("")}</div>`;
+  $("#top").innerHTML = `<a class="brand" href="#hoje" data-act="home" aria-label="Voca home">Voca</a><div class="seg" role="group" aria-label="Language">${Object.values(LANGUAGES).map((l) => `<button data-act="lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}">${l.code.toUpperCase()}</button>`).join("")}</div>`;
   $("#nav").innerHTML = TAB_IDS.map((t, i) => `<a href="#${t}" ${t === tab ? 'aria-current="page"' : ""}>${L().tabs[i]}</a>`).join("");
 }
 
 function welcome() {
-  const form = Account.enabled ? `<form class="stack" id="auth-form">
+  const signedIn = Account.enabled && Account.signedIn;
+  const form = signedIn ? `<div class="stack"><button class="btn wide" data-act="guest">Continue</button><p class="small muted">Signed in as ${esc(Account.email)}</p><div><button class="link" data-act="sign-out">Sign out</button></div></div>` : Account.enabled ? `<form class="stack" id="auth-form">
       <label class="field">Email<input type="email" id="auth-email" autocomplete="email" autocapitalize="off" required></label>
       <label class="field">Password<input type="password" id="auth-password" autocomplete="${welcomeMode === "signup" ? "new-password" : "current-password"}" minlength="8" required></label>
       ${welcomeErr ? `<p class="error" role="alert">${esc(welcomeErr)}</p>` : ""}
@@ -321,8 +322,8 @@ function welcome() {
     <div class="stack" style="gap:10px"><h1>Voca</h1><p class="muted" style="max-width:34ch;font-size:1.15rem">Practice speaking the language you actually plan to use.</p></div>
     <div class="stack"><div class="eyebrow">I want to learn</div><div class="langs">${Object.values(LANGUAGES).map((l) => `<button data-act="pick-lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}"><span>${l.native}</span><span>${l.code === S.lang ? "Selected" : l.name}</span></button>`).join("")}</div></div>
     ${form}
-    <button class="link" data-act="guest">${Account.enabled ? "Continue without an account" : "Get started"}</button>
-    ${Account.enabled ? `<p class="small muted">Without an account, progress stays on this device.</p>` : ""}
+    ${signedIn ? "" : `<button class="link" data-act="guest">${Account.enabled ? "Continue without an account" : "Get started"}</button>`}
+    ${Account.enabled && !signedIn ? `<p class="small muted">Without an account, progress stays on this device.</p>` : ""}
   </section>`;
 }
 
@@ -475,7 +476,7 @@ function teste() {
 const VIEWS = { hoje, conversa: conversaView, cartoes, ponte, sons, teste };
 function render() {
   chrome();
-  if (!S.onboarded) { $("#view").innerHTML = welcome(); return; }
+  if (!S.onboarded || homeOpen) { $("#view").innerHTML = welcome(); return; }
   $("#view").innerHTML = VIEWS[tab]();
   if (tab === "conversa") renderChat();
 }
@@ -483,7 +484,7 @@ let tt;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => (t.hidden = true), 3200); }
 
 function afterEntry() {
-  S.onboarded = true; writeLocal();
+  S.onboarded = true; homeOpen = false; writeLocal();
   location.hash = P().level ? "hoje" : "teste";
   tab = fromHash(); render(); scrollTo(0, 0);
 }
@@ -515,11 +516,12 @@ document.addEventListener("click", (e) => {
   const a = b.dataset.act, d = b.dataset;
   const fn = {
     lang() { S.lang = d.v; R = null; D = null; save(); render(); },
-    "pick-lang"() { S.lang = d.v; writeLocal(); render(); },
+    home() { e.preventDefault(); homeOpen = true; render(); scrollTo(0, 0); },
+    "pick-lang"() { S.lang = d.v; R = null; D = null; writeLocal(); render(); },
     "auth-mode"() { welcomeMode = welcomeMode === "signup" ? "signin" : "signup"; welcomeErr = ""; welcomeNote = ""; render(); },
     guest() { afterEntry(); },
-    "show-signin"() { S.onboarded = false; writeLocal(); render(); scrollTo(0, 0); },
-    async "sign-out"() { await signOut(); syncState = ""; S.onboarded = false; writeLocal(); render(); },
+    "show-signin"() { homeOpen = true; render(); scrollTo(0, 0); },
+    async "sign-out"() { await signOut(); syncState = ""; homeOpen = true; render(); scrollTo(0, 0); },
     lead() { S.lead = d.v; C.accent = null; save(); render(); },
     say() { speak(d.t, d.v); },
     reveal() { D.reveal = true; render(); },

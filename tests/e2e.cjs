@@ -119,6 +119,16 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     assert.equal(await overflow(p), false, "overflow pt ponte");
     await p.screenshot({ path: `${shots}/8-ponte-pt.png` });
 
+    // the Voca name opens the landing page, and Continue returns to the app
+    await p.click(".brand"); await p.waitForSelector(".landing .langs");
+    assert.equal(await p.isVisible("#nav"), false);
+    await p.screenshot({ path: `${shots}/9-home.png` });
+    await p.click('[data-act="pick-lang"][data-v="fr"]');
+    await p.click('[data-act="guest"]');
+    await p.waitForFunction(() => tab === "teste" || tab === "hoje");
+    assert.equal(await p.evaluate(() => S.lang), "fr");
+    assert.equal(await p.isVisible("#nav"), true);
+
     // progress reached the account, then returns on a new device
     await p.waitForTimeout(1800);
     assert.equal(store.row.data.profiles.fr.level, "A1");
