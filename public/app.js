@@ -108,6 +108,8 @@ const ICONS = {
   cartoes: line('<rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 4h10a2 2 0 0 1 2 2v10"/>'),
   ponte: line('<path d="M3 18v-3a9 9 0 0 1 18 0v3M3 18h18M8 18v-5M12 18v-6M16 18v-5"/>'),
   sons: line('<path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/>'),
+  check: line('<path d="m5 12 5 5 9-10"/>'),
+  arrow: line('<path d="M5 12h14M13 6l6 6-6 6"/>'),
 };
 const say = (t, v) => `<button class="say" data-act="say" data-t="${esc(t)}" data-v="${v}" aria-label="Listen: ${esc(t)}">${ICON}</button>`;
 
@@ -335,9 +337,9 @@ function welcome() {
       <button class="btn wide" type="submit" ${welcomeBusy ? "disabled" : ""}>${welcomeBusy ? "One moment..." : welcomeMode === "signup" ? "Create account" : "Sign in"}</button>
       <button class="link" type="button" data-act="auth-mode">${welcomeMode === "signup" ? "I already have an account" : "Create an account"}</button>
     </form>` : "";
-  return `<section class="landing"><div class="landing-art" aria-hidden="true"></div><div class="landing-main">
+  return `<section class="landing"><div class="landing-art" aria-hidden="true"><span>${S.lang === "fr" ? "Bonjour" : "Olá"}</span></div><div class="landing-main">
     <div class="stack" style="gap:10px"><h1>Voca</h1><p class="muted" style="max-width:34ch;font-size:1.15rem">Practice speaking the language you actually plan to use.</p></div>
-    <div class="stack"><div class="eyebrow">I want to learn</div><div class="langs">${Object.values(LANGUAGES).map((l) => `<button data-act="pick-lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}"><span>${l.native}</span><span>${l.code === S.lang ? "Selected" : l.name}</span></button>`).join("")}</div></div>
+    <div class="stack"><div class="eyebrow">I want to learn</div><div class="langs">${Object.values(LANGUAGES).map((l) => `<button data-act="pick-lang" data-v="${l.code}" data-l="${l.code}" aria-pressed="${l.code === S.lang}"><span class="lang-swatch"></span><span class="lang-text"><b>${l.native}</b><small>${l.name}</small></span><span class="lang-pick">${l.code === S.lang ? ICONS.check : ""}</span></button>`).join("")}</div></div>
     ${form}
     ${signedIn ? "" : `<button class="link" data-act="guest">${Account.enabled ? "Continue without an account" : "Get started"}</button>`}
     ${Account.enabled && !signedIn ? `<p class="small muted">Without an account, progress stays on this device.</p>` : ""}
@@ -352,23 +354,21 @@ function hoje() {
   const days = [...Array(14)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 13 + i); const k = dayKey(d), o = P().log[k]; return `<i class="${o && (o.c || o.t) ? "on" : ""}" title="${k}"></i>`; }).join("");
   const errs = Object.entries(P().errs || {}).sort((a, b) => b[1] - a[1]), max = errs[0] ? errs[0][1] : 1;
   const sub = S.lang === "pt" && dT > 0 ? `${dT} days to Lisbon` : P().level ? `Level ${P().level}` : "";
-  return `<section class="hero"><div class="hero-text"><h1>${esc(lang.greet(h))}${S.name ? `, ${esc(S.name)}` : ""}.</h1>${sub ? `<p class="muted">${esc(sub)}</p>` : ""}</div></section>
-  ${P().level ? "" : `<section class="stack"><div class="notice stack" style="gap:8px"><b>Find your level</b><p class="small">A 20-question test sets how your partner speaks to you. It takes about 5 minutes.</p><div><button class="btn small" data-act="test">Start the test</button></div></div></section>`}
+  const pc = Math.min(100, Math.round((l.c / GOAL_C) * 100)), pt = Math.min(100, Math.round((l.t / GOAL_T) * 100));
+  return `<section class="hero"><div class="hero-text"><h1>${esc(lang.greet(h))}${S.name ? `, ${esc(S.name)}` : ""}.</h1>${sub ? `<p class="hero-sub">${esc(sub)}</p>` : ""}
+    <div class="goals"><div><span>${l.c} of ${GOAL_C} cards</span><div class="track"><i style="width:${pc}%"></i></div></div><div><span>${l.t} of ${GOAL_T} replies</span><div class="track"><i style="width:${pt}%"></i></div></div></div></div></section>
+  ${P().level ? "" : `<section class="panel callout"><div><h3>Find your level</h3><p class="muted">A short test sets how your partner speaks to you. It takes about 5 minutes.</p></div><button class="btn" data-act="test">Start the test</button></section>`}
+  <section class="actions">
+    <a class="action primary" href="#conversa" data-act="go-scene" data-id="${sn.id}">${ICONS.conversa}<b>Speak</b><span>${esc(sn.t)}</span></a>
+    <a class="action" href="#cartoes">${ICONS.cartoes}<b>Recall</b><span>${Math.min(q.length, GOAL_C)} cards today</span></a>
+    <a class="action" href="#ponte">${ICONS.ponte}<b>Bridge</b><span>${esc(br.t)}</span></a>
+    <a class="action" href="#sons">${ICONS.sons}<b>Sounds</b><span>${lang.sounds.length} drills</span></a>
+  </section>
   <div class="dash">
-    <div class="stack" style="gap:30px">
-      <section class="list">
-        <a class="rowlink" href="#conversa" data-act="go-scene" data-id="${sn.id}"><span>${ICONS.conversa}Speak</span><span>${esc(sn.t)}</span></a>
-        <a class="rowlink" href="#cartoes"><span>${ICONS.cartoes}Recall</span><span>${Math.min(q.length, GOAL_C)} today</span></a>
-        <a class="rowlink" href="#ponte"><span>${ICONS.ponte}Bridge</span><span>${esc(br.t)}</span></a>
-        <a class="rowlink" href="#sons"><span>${ICONS.sons}Sounds</span><span>${lang.sounds.length} drills</span></a>
-      </section>
-      <section class="stack" style="gap:8px"><h3>Your words</h3><div class="wall" role="img" aria-label="${mast} of ${cs.length} words complete">${tiles}</div><p class="small muted">${mast} of ${cs.length} complete</p></section>
-    </div>
-    <div class="stack" style="gap:30px">
-      <section class="stack"><h3>Today's bridge</h3><div class="small"><span class="tag">ES</span>${esc(br.es)}</div>${forms(br)}<p class="small muted">${esc(br.n)}</p></section>
-      <section class="stack"><h3>Last 14 days</h3><div class="days">${days}</div><p class="small muted">${l.c} cards and ${l.t} replies today. Goal: ${GOAL_C} cards and ${GOAL_T} replies.</p></section>
-      <section class="stack"><h3>What trips you up</h3>${errs.length ? errs.slice(0, 5).map((e) => `<div class="bar"><span>${ERR[e[0]] || e[0]}</span><b>${e[1]}</b><div class="track"><i style="width:${Math.round((e[1] / max) * 100)}%"></i></div></div>`).join("") : `<p class="small muted">Your conversation corrections build this list, and your partner uses it to focus on your weak spots.</p>`}</section>
-    </div>
+    <section class="panel stack"><h3>Your words</h3><div class="wall" role="img" aria-label="${mast} of ${cs.length} words complete">${tiles}</div><p class="small muted">${mast} of ${cs.length} complete</p></section>
+    <section class="panel stack"><h3>Today's bridge</h3><div class="small"><span class="tag">ES</span>${esc(br.es)}</div>${forms(br)}<p class="small muted">${esc(br.n)}</p></section>
+    <section class="panel stack"><h3>Last 14 days</h3><div class="days">${days}</div></section>
+    <section class="panel stack"><h3>What trips you up</h3>${errs.length ? errs.slice(0, 5).map((e) => `<div class="bar"><span>${ERR[e[0]] || e[0]}</span><b>${e[1]}</b><div class="track"><i style="width:${Math.round((e[1] / max) * 100)}%"></i></div></div>`).join("") : `<p class="small muted">Your conversation corrections build this list, and your partner uses it to focus on your weak spots.</p>`}</section>
   </div>`;
 }
 
@@ -391,8 +391,8 @@ function perfil() {
   const initial = esc((S.name || Account.email || "?").trim().charAt(0).toUpperCase());
   return `<section class="hero"><div class="hero-text row" style="gap:16px"><span class="avatar big">${initial}</span><div style="min-width:0"><h1 style="font-size:clamp(2rem,6vw,2.7rem)">${esc(S.name || "Your profile")}</h1>${Account.signedIn ? `<p class="muted" style="overflow-wrap:anywhere">${esc(Account.email)}</p>` : ""}</div></div></section>
   <section class="stats"><div><b>${streak()}</b><span>day streak</span></div><div><b>${sumCards}</b><span>cards reviewed</span></div><div><b>${sumReplies}</b><span>replies sent</span></div></section>
-  <section class="stack"><h2>Languages</h2><div class="list">${profiles.map((x) => `<div class="lang-row" data-lang="${x.lang.code}"><div style="min-width:0"><div class="lang-name">${x.lang.native}</div><div class="small muted">${x.p.level ? `Level ${x.p.level}` : "No level yet"} · ${x.done} of ${x.total} words</div></div><button class="btn ghost small" data-act="test-lang" data-v="${x.lang.code}">${x.p.level ? "Retake test" : "Take test"}</button></div>`).join("")}</div></section>
-  <section class="settings"><h2>Settings</h2>
+  <section class="stack"><h2>Languages</h2><div class="lang-cards">${profiles.map((x) => `<div class="lang-row" data-l="${x.lang.code}"><span class="lang-swatch"></span><div style="min-width:0;flex:1"><div class="lang-name">${x.lang.native}</div><div class="small muted">${x.p.level ? `Level ${x.p.level}` : "No level yet"} · ${x.done} of ${x.total} words</div></div><button class="btn ghost small" data-act="test-lang" data-v="${x.lang.code}">${x.p.level ? "Retake test" : "Take test"}</button></div>`).join("")}</div></section>
+  <section class="settings panel"><h2>Settings</h2>
     <label class="field">Your name<input type="text" id="profile-name" autocomplete="given-name" value="${esc(S.name)}"></label>
     <div class="stack" style="gap:6px"><h3>Portuguese forms</h3><p class="small muted">Auto shows Brazil first until May 1, 2027, then Portugal.</p><div class="seg" role="group" aria-label="Forms shown first">${[["auto", "Auto"], ["br", "Brazil"], ["pt", "Portugal"]].map((o) => `<button data-act="lead" data-v="${o[0]}" aria-pressed="${S.lead === o[0]}">${o[1]}</button>`).join("")}</div>
       <label class="field">Lisbon arrival<input type="date" id="lisbon-date" value="${esc(S.lisbon)}"></label></div>
@@ -419,8 +419,8 @@ function conversaView() {
     <div class="chat-tools"><div id="chat-btns" class="row"></div><label class="check muted"><input type="checkbox" id="auto-say" ${S.auto ? "checked" : ""}> Read aloud</label></div>
   </section>
   <aside class="c-side">
-    <div class="c-scenes stack" style="gap:6px"><h3 class="desk">Scenes</h3><div class="scenes">${lang.scenarios.map((s) => `<button data-act="scene" data-id="${s.id}" aria-pressed="${s.id === C.sc}">${esc(s.t)}</button>`).join("")}</div>${C.sc === "livre" || C.sc === "libre" ? `<input type="text" id="free-topic" placeholder="Topic, such as music or Boston" value="${esc(C.custom)}" aria-label="Conversation topic">` : ""}</div>
-    <div class="c-phrases stack"><h3>Useful phrases</h3><p class="small muted">Stuck on a word? Write it in Spanish and your partner will give you the ${esc(lang.name)}.</p><p class="small muted phone-only">To speak your reply, tap the mic on your keyboard with ${esc(lang.name)} added as a keyboard language.</p><p class="small muted desk">To speak on a Mac, press the dictation key or the Fn key twice, with ${esc(lang.name)} set as your dictation language.</p><div>${sc().ph.map((p) => `<div class="block"><div class="small muted">${esc(p[0])}</div>${forms(phraseItem(p))}</div>`).join("")}</div></div>
+    <div class="c-scenes stack" style="gap:8px"><h3 class="desk">Scenes</h3><div class="scenes">${lang.scenarios.map((s) => `<button data-act="scene" data-id="${s.id}" aria-pressed="${s.id === C.sc}">${esc(s.t)}</button>`).join("")}</div>${C.sc === "livre" || C.sc === "libre" ? `<input type="text" id="free-topic" placeholder="Topic, such as music or Boston" value="${esc(C.custom)}" aria-label="Conversation topic">` : ""}</div>
+    <div class="c-phrases panel stack"><h3>Useful phrases</h3><p class="small muted">Stuck on a word? Write it in Spanish and your partner will give you the ${esc(lang.name)}.</p><p class="small muted phone-only">To speak your reply, tap the mic on your keyboard with ${esc(lang.name)} added as a keyboard language.</p><p class="small muted desk">To speak on a Mac, press the dictation key or the Fn key twice, with ${esc(lang.name)} set as your dictation language.</p><div>${sc().ph.map((p) => `<div class="block"><div class="small muted">${esc(p[0])}</div>${forms(phraseItem(p))}</div>`).join("")}</div></div>
   </aside>
   </div>`;
 }
@@ -454,10 +454,10 @@ function renderChat() {
 function cartoes() {
   let body = "";
   if (R && R.summary) {
-    body = `<section class="stack"><h1>${R.right} of ${R.done}</h1><p class="muted">Missed words come back tomorrow. Use a few out loud while they're fresh.</p><div class="row"><a class="btn" href="#conversa">Start speaking</a><button class="btn ghost" data-act="review">Review more</button></div></section>`;
+    body = `<section class="flash stack"><h1>${R.right} of ${R.done}</h1><p class="muted">Missed words come back tomorrow. Use a few out loud while they're fresh.</p><div class="row"><a class="btn" href="#conversa">Start speaking</a><button class="btn ghost" data-act="review">Review more</button></div></section>`;
   } else if (R) {
     const c = R.q[R.i], pct = Math.round((R.i / R.q.length) * 100), r = R.rev;
-    body = `<section class="stack" style="gap:16px"><div class="row between small muted"><span>${R.i + 1} / ${R.q.length}</span><button class="link small" data-act="quit">End session</button></div><div class="prog"><i style="width:${pct}%"></i></div>
+    body = `<section class="flash stack" style="gap:18px"><div class="row between small muted"><span>${R.i + 1} / ${R.q.length}</span><button class="link small" data-act="quit">End session</button></div><div class="prog"><i style="width:${pct}%"></i></div>
       <div class="eyebrow">${c.fix ? "Correct this" : c.tag === "class" ? "From class" : `Say it in ${L().name}`}</div><div class="prompt">${esc(c.en)}</div>
       ${c.es ? `<div class="muted"><span class="tag">ES</span>${esc(c.es)}</div>` : ""}
       <input type="text" id="card-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type it from memory" value="${esc(R.val)}" ${r ? "disabled" : ""} aria-label="Your answer">
@@ -466,9 +466,9 @@ function cartoes() {
     </section>`;
   } else {
     const q = queue(), due = dueCards().length;
-    body = `<section class="stack"><h2>Recall</h2><p class="muted">Type each answer from memory. Words return after 1, 3, 7, 16, 35 and 80 days.</p><div class="row small muted"><span>${due} due</span><span>${q.length - due} new</span><span>${all().length} in deck</span></div><div><button class="btn" data-act="review">Start review</button></div></section>`;
+    body = `<section class="flash stack" style="gap:18px"><h1>Recall</h1><p class="muted">Type each answer from memory. Words return after 1, 3, 7, 16, 35 and 80 days.</p><div class="stats"><div><b>${due}</b><span>due</span></div><div><b>${q.length - due}</b><span>new today</span></div><div><b>${all().length}</b><span>in deck</span></div></div><button class="btn wide" data-act="review">Start review</button></section>`;
   }
-  return `<div class="narrow stack" style="gap:30px">${body}<section class="stack" style="border-top:1px solid var(--line);padding-top:22px"><h3>Add class words</h3><p class="small muted">Paste a vocabulary list or a grammar topic. Claude builds the cards, and they come up first.</p>
+  return `<div class="narrow stack" style="gap:30px">${body}<section class="panel stack"><h3>Add class words</h3><p class="small muted">Paste a vocabulary list or a grammar topic. Claude builds the cards, and they come up first.</p>
     <textarea id="import-text" rows="3" aria-label="Class vocabulary or grammar topic"></textarea><div><button class="btn ghost small" id="import-btn" data-act="import">Build cards</button></div></section></div>`;
 }
 
@@ -482,9 +482,9 @@ function ponte() {
   const seg = two ? `<div class="seg" role="group" aria-label="Bridge type"><button data-act="pseg" data-v="es" aria-pressed="${pSeg === "es"}">From Spanish</button><button data-act="pseg" data-v="bp" aria-pressed="${pSeg === "bp"}">Brazil and Portugal</button></div>` : "";
   if (pSeg === "es") {
     return `<section class="stack"><h2>From Spanish</h2><p class="muted">Most Spanish words reach ${lang.name} through regular changes. Learn the changes, then learn where the guess fails.</p>${seg}</section>
-    <div class="two"><section class="stack"><div class="eyebrow">Predict the word</div><div class="prompt">${esc(PQ.es)}</div><input type="text" id="pq-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(PQ.val)}" aria-label="Translation" ${PQ.res ? "disabled" : ""}>
+    <div class="two"><section class="panel stack"><div class="eyebrow">Predict the word</div><div class="prompt">${esc(PQ.es)}</div><input type="text" id="pq-input" lang="${S.lang}" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(PQ.val)}" aria-label="Translation" ${PQ.res ? "disabled" : ""}>
       ${PQ.res ? `<div class="verdict ${PQ.res === "bad" ? "bad" : PQ.res === "accent" ? "warn" : "good"}">${PQ.res === "bad" ? "Answer" : PQ.res === "accent" ? "Check the accent" : esc(lang.correct)}: ${esc(PQ.tr)}</div><div class="muted small">${esc(PQ.r)}</div><div><button class="btn small" data-act="pq-next">Next word</button></div>` : `<div><button class="btn small" data-act="pq-check">Check</button></div>`}</section>
-    <section class="stack"><div class="eyebrow">False friend</div><div class="prompt">${esc(FQ.f[0])}</div><div class="muted small">It looks like: ${esc(FQ.f[1])}. It really means:</div>
+    <section class="panel stack"><div class="eyebrow">False friend</div><div class="prompt">${esc(FQ.f[0])}</div><div class="muted small">It looks like: ${esc(FQ.f[1])}. It really means:</div>
       <div class="opts">${FQ.opts.map((o) => `<button data-act="ff-pick" data-v="${esc(o)}" class="${FQ.pick ? (o === FQ.f[2] ? "right" : o === FQ.pick ? "wrong" : "") : ""}" ${FQ.pick ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>
       ${FQ.pick ? `<div class="muted small">${esc(FQ.f[3])}</div><div><button class="btn small" data-act="ff-next">Next</button></div>` : ""}<div class="small muted">${P().ff.r} of ${P().ff.t} correct so far</div></section></div>
     <section><h3>Sound rules</h3><div class="cols" style="margin-top:8px">${lang.rules.map((r) => `<div class="block"><b style="font-weight:600">${esc(r.t)}</b><div class="pairs">${r.ex.map((e) => `<span><i>${esc(e[0])}</i> → ${esc(e[1])}</span>`).join("")}</div><div class="muted small">${esc(r.n)}</div></div>`).join("")}</div></section>
@@ -506,7 +506,7 @@ function sons() {
   const voiceNote = codes.map((c) => { const v = voiceFor(c); return v ? `${names[c]} voice: ${v.name}.` : `No ${names[c]} voice found. Add one in your device's speech settings.`; }).join(" ");
   const res = fr ? [["RFI Français facile", "https://francaisfacile.rfi.fr/", "Free news audio and exercises from A1 to B2."], ["France Inter", "https://www.radiofrance.fr/franceinter", "Real radio from France."], ["Easy French", "https://www.youtube.com/results?search_query=easy+french", "Street interviews on YouTube, with subtitles."]]
     : [["Practice Portuguese", "https://www.practiceportuguese.com/blog/learn-european-portuguese-free/", "Free short dialogues and a podcast, in European Portuguese."], ["RTP Play", "https://www.rtp.pt/play/", "TV and radio from Portugal's public broadcaster."], ["Easy Portuguese", "https://www.youtube.com/results?search_query=easy+portuguese", "Street interviews on YouTube, with subtitles."]];
-  return `<section class="stack"><h2>Sounds</h2><p class="muted">Listen, repeat out loud, then compare. If you hear nothing, check your iPhone's silent switch.</p>
+  return `<section class="stack"><h2>Sounds</h2><p class="muted">Listen, repeat out loud, then compare. On an iPhone, check the silent switch if you hear nothing.</p>
     <label class="check"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label><p class="small muted">${esc(voiceNote)}</p></section>
     <section class="cols">${L().sounds.map((s) => `<div class="block"><h3>${esc(s.t)}</h3><p class="muted small">${esc(s.trap)}</p>${fr ? `<p class="small">${esc(s.d)}</p>` : `<p class="small"><span class="tag br">BR</span>${esc(s.br)}</p><p class="small"><span class="tag pt">PT</span>${esc(s.pt)}</p>`}<div class="stack" style="gap:5px;margin-top:4px">${s.w.map((w) => `<div class="line">${codes.map((c) => say(w, c)).join("")}<span>${esc(w)}</span></div>`).join("")}</div></div>`).join("")}</section>
     <section class="stack"><h3>Real speech</h3><div class="list">${res.map((r) => `<a class="rowlink" href="${r[1]}" rel="noopener"><span>${esc(r[0])}</span><span>${esc(r[2])}</span></a>`).join("")}</div></section>`;
@@ -518,7 +518,7 @@ function teste() {
     <div class="stack"><label class="field" for="write-text"><b>Optional: a writing check</b><span>${esc(L().writePrompt)}</span></label><textarea id="write-text" rows="4">${esc(D.write)}</textarea>${D.writeOut ? `<div class="notice" style="white-space:pre-wrap">${esc(D.writeOut)}</div>` : ""}<div><button class="btn ghost small" data-act="write" ${D.writeBusy ? "disabled" : ""}>Check my writing</button></div></div>
     <a class="btn wide" href="#hoje">Start practicing</a></section>`;
   const it = D.items[D.i], total = L().diagnostic.flat().length, done = D.stage * 5 + D.i;
-  return `<section class="stack narrow" style="gap:18px;padding-top:12px"><div class="row between small muted"><span>Round ${D.stage + 1} of ${L().diagnostic.length}</span><a class="link small" href="#hoje">Exit</a></div><div class="prog"><i style="width:${Math.round((done / total) * 100)}%"></i></div>
+  return `<section class="flash narrow stack" style="gap:18px"><div class="row between small muted"><span>Round ${D.stage + 1} of ${L().diagnostic.length}</span><a class="link small" href="#hoje">Exit</a></div><div class="prog"><i style="width:${Math.round((done / total) * 100)}%"></i></div>
     ${it.listen ? `<div class="stack" style="gap:8px"><div class="row"><button class="btn ghost small" data-act="say" data-t="${esc(it.listen)}" data-v="${S.lang === "fr" ? "fr" : lead()}">Play audio</button><button class="link small" data-act="reveal">No sound? Show text</button></div>${D.reveal ? `<p>${esc(it.listen)}</p>` : ""}</div>` : ""}
     <div class="prompt" style="font-size:clamp(1.7rem,6vw,2.3rem)">${esc(it.q)}</div>
     <div class="opts">${it.options.map((o) => `<button data-act="answer" data-v="${esc(o)}">${esc(o)}</button>`).join("")}<button data-act="answer" data-v="" class="muted">I don't know</button></div></section>`;

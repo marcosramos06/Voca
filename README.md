@@ -43,7 +43,7 @@ Free Supabase projects can pause after about a week of low activity. Your data i
 
 ## Updating the app
 
-Changes pushed to `main` deploy automatically. The phone picks them up the next time the app opens, and they show on the open after that.
+Changes pushed to `main` deploy automatically. The app loads the latest version each time it opens with a connection.
 
 | To change | Edit |
 | --- | --- |
