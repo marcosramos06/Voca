@@ -1,4 +1,4 @@
-/* Picture vocabulary. Photos come from Wikimedia Commons and load with credit to each author.
+/* Picture vocabulary. Photos come from Wikimedia Commons, are stored in public/photos, and show credit to each author.
    [category, english, spanish, Brazil, Portugal or "", French, file, license, author] */
 const PICTURE_RAW = [
 ["animals","dog","el perro","o cachorro","o cão","le chien","Portrait of a golden retriever on the grass.jpg","CC BY 2.0","Shixart1985"],
@@ -78,5 +78,5 @@ function pictureCards(code) {
     return card;
   });
 }
-const photoUrl = (file, width = 640) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`;
+const photoUrl = (card) => `/photos/${card.en.replace(/\s+/g, "-")}.jpg`;
 const photoPage = (file) => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file)}`;

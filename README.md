@@ -67,7 +67,7 @@ Photo lessons shrink the image on the device and send it to Claude through `api/
 
 ## Photo credits
 
-Picture Words uses photos from Wikimedia Commons. Each photo shows its author and license, and links to its source page.
+Picture Words uses photos from Wikimedia Commons. Each photo shows its author and license, and links to its source page. Photos are stored in `public/photos`. To add one, add a row to `public/lang/pictures.js` and run the **Fetch photos** GitHub workflow.
 
 ## Updating the app
 

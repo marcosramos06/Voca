@@ -6,7 +6,7 @@ self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.
 self.addEventListener("fetch",e=>{
   const req=e.request,url=new URL(req.url);
   if(req.method!=="GET"||url.pathname.startsWith("/api/"))return;
-  const font=url.hostname==="fonts.googleapis.com"||url.hostname==="fonts.gstatic.com"||url.hostname==="commons.wikimedia.org"||url.hostname==="upload.wikimedia.org";
+  const font=url.hostname==="fonts.googleapis.com"||url.hostname==="fonts.gstatic.com";
   if(url.origin!==self.location.origin&&!font)return;
   e.respondWith((async()=>{
     const cache=await caches.open(CACHE);

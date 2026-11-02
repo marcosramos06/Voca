@@ -820,7 +820,7 @@ function sons() {
 /* ---------- picture words ---------- */
 let PW = null;
 const answerText = (c) => (S.lang === "fr" ? c.fr : c.br);
-const pictureImg = (c, cls = "photo") => `<img class="${cls}" src="${esc(photoUrl(c.file))}" alt="${esc(c.en)}" loading="lazy" referrerpolicy="no-referrer">`;
+const pictureImg = (c, cls = "photo") => `<img class="${cls}" src="${esc(photoUrl(c))}" alt="${esc(c.en)}" loading="lazy">`;
 const credit = (c) => `<p class="credit"><a href="${esc(photoPage(c.file))}" rel="noopener" target="_blank">Photo: ${esc(c.author)}, ${esc(c.license)}</a></p>`;
 function fotos() {
   const list = pictures();
@@ -844,7 +844,7 @@ function fotos() {
   }
   return `<section class="stack"><h2>Picture Words</h2><p class="muted">Learn everyday words from real photos, without going through English.</p></section>
     <section class="sets">${PICTURE_SETS.map((set) => { const items = list.filter((c) => c.cat === set.id), cover = items.find((c) => c.en === set.cover), started = items.filter((c) => st(c.id).b > 0).length; return `<article class="set-card">${pictureImg(cover)}<div class="pic-body"><div class="row between"><h3>${set.title}</h3><span class="small muted">${started} of ${items.length}</span></div><div class="track"><i style="width:${Math.round((started / items.length) * 100)}%"></i></div><div class="btn-row"><button class="btn small" data-act="pic-learn" data-id="${set.id}">Learn</button><button class="btn ghost small" data-act="pic-quiz" data-id="${set.id}">Quiz</button></div></div></article>`; }).join("")}</section>
-    <p class="small muted">Photos are from Wikimedia Commons, credited on each photo, and need a connection the first time they load.</p>`;
+    <p class="small muted">Photos are from Wikimedia Commons and credited on each photo.</p>`;
 }
 function picRound() {
   const c = PW.q[PW.i], all0 = pictures().filter((x) => x.id !== c.id);
