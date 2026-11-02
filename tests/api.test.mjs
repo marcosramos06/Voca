@@ -30,6 +30,7 @@ process.env.SUPABASE_URL = `http://127.0.0.1:${mock.address().port}`;
 process.env.SUPABASE_ANON_KEY = "public-key";
 process.env.ALLOWED_EMAILS = "someone@example.com, marcos@example.com";
 const { default: handler } = await import("../api/chat.js");
+const { supabaseOrigin } = await import("../api/config.js");
 test.after(() => mock.close());
 
 async function call(body, method = "POST") {
@@ -95,6 +96,15 @@ test("rejects other accounts without calling Claude", async () => {
   assert.equal((await call({ ...m, accessToken: "unconfirmed" })).json.code, "not_allowed");
   assert.equal((await call({ ...m, accessToken: "expired" })).json.code, "bad_session");
   assert.equal(seen, null);
+});
+test("accepts a Supabase address pasted with extra path", async () => {
+  const original = process.env.SUPABASE_URL;
+  process.env.SUPABASE_URL = `${original}/rest/v1/`;
+  assert.equal(supabaseOrigin("https://abc.supabase.co/rest/v1/"), "https://abc.supabase.co");
+  assert.equal(supabaseOrigin(" https://abc.supabase.co/ "), "https://abc.supabase.co");
+  assert.equal(supabaseOrigin("not a url"), "");
+  assert.equal((await call({ accessToken: "good", tier: "quick", messages: good.messages })).code, 200);
+  process.env.SUPABASE_URL = original;
 });
 test("a bad token cannot fall back to no check", async () => {
   assert.equal((await call({ ...good, passcode: "", accessToken: "expired" })).code, 401);

@@ -2,6 +2,7 @@
 // The API key never reaches the phone. Every request must come from an allowed
 // signed-in account, or carry the app passcode.
 import { createHash, timingSafeEqual } from "node:crypto";
+import { supabaseOrigin } from "./config.js";
 
 const API_URL = process.env.ANTHROPIC_API_URL || "https://api.anthropic.com/v1/messages";
 const MAX_MESSAGES = 24;
@@ -17,7 +18,8 @@ const passcodeMatches = (given, expected) =>
 
 // Confirms the sign-in token with Supabase, then checks the email against ALLOWED_EMAILS.
 async function accountAccess(token) {
-  const { SUPABASE_URL: url, SUPABASE_ANON_KEY: key, ALLOWED_EMAILS: allowed = "" } = process.env;
+  const { SUPABASE_ANON_KEY: rawKey = "", ALLOWED_EMAILS: allowed = "" } = process.env;
+  const url = supabaseOrigin(), key = rawKey.trim();
   if (!url || !key || typeof token !== "string" || !token) return "bad_session";
   let reply;
   try {
