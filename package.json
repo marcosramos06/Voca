@@ -1,0 +1,11 @@
+{
+  "name": "voca",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "test": "node --test tests/api.test.mjs"
+  }
+}

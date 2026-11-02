@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "Voca",
+  "short_name": "Voca",
+  "description": "Portuguese speaking and recall practice for a Spanish speaker headed to Lisbon.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#143b8c",
+  "theme_color": "#143b8c",
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
