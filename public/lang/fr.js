@@ -232,7 +232,7 @@ const diagnostic = [
 ];
 
 LANGUAGES.fr = {
-  code: "fr", name: "French", native: "Français", voice: "fr-FR", lead: "Bonjour",
+  code: "fr", name: "French", native: "Français", voice: "fr-FR", lead: "Bonjour", hello: "Bonjour", fallback: "Bonjour ! Je vous écoute.",
   tabs: ["Jour", "Parler", "Cartes", "Pont", "Sons"],
   greet: (h) => (h < 18 ? "Bonjour" : "Bonsoir"),
   variety: "standard France French as heard in Paris. Use tu or vous as the role says",
@@ -241,6 +241,7 @@ LANGUAGES.fr = {
   correct: "Bien joué !", start: "Un petit test ?",
   sample: { said: "Je veux", better: "Je voudrais", why: "Softer, and the natural way to order in French.", line: "Je veux un croissant, por favor" },
   writePrompt: "Write two or three sentences in French about what you did last weekend.",
+  resources: [["RFI Français facile", "https://francaisfacile.rfi.fr/", "Free news audio and exercises from A1 to B2."], ["France Inter", "https://www.radiofrance.fr/franceinter", "Real radio from France."], ["Easy French", "https://www.youtube.com/results?search_query=easy+french", "Street interviews on YouTube, with subtitles."]],
   missions: [
     "Text a friend one sentence in French.",
     "Name ten things in your room out loud.",

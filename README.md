@@ -1,8 +1,10 @@
 # Voca
 
-Portuguese and French speaking and recall practice for Spanish speakers. It has live conversation with corrections, spaced recall, Spanish bridges, pronunciation drills, and a level test for each language.
+Language practice that builds on the Romance language you already know. Choose Portuguese, French, Italian or Spanish, then tell Voca what you already speak. It has live conversation with corrections, spaced recall, language bridges, pronunciation drills, Picture Words, and a level test for each language.
 
-Portuguese shows Brazilian and Portugal forms. Brazilian forms come first for PORTUGUE 102, and Portugal forms take over on May 1, 2027. French uses standard France French.
+Portuguese shows Brazilian and Portugal forms. Brazilian forms come first for PORTUGUE 102, and Portugal forms take over on May 1, 2027. French uses standard France French. Italian uses standard Italian, and Spanish uses standard Latin American Spanish.
+
+Bridges from Spanish to Portuguese, French and Italian are written by hand. For any other pair, your AI partner builds the bridge once and Voca saves it.
 
 Live app: https://voca-nine-taupe.vercel.app
 

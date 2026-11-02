@@ -239,7 +239,7 @@ const DIAGNOSTIC=[
 ];
 const today0=()=>new Date().toISOString().slice(0,10);
 LANGUAGES.pt={
-  code:"pt",name:"Portuguese",native:"Português",voice:"pt-BR",
+  code:"pt",name:"Portuguese",native:"Português",voice:"pt-BR",hello:"Olá",fallback:"Olá! Como posso ajudar?",
   tabs:["Hoje","Conversa","Cartões","Ponte","Sons"],
   greet:(h)=>h<12?"Bom dia":h<19?"Boa tarde":"Boa noite",
   importFields:'{"en":"English prompt","es":"Spanish equivalent","br":"Brazilian Portuguese","pt":"European Portuguese, or empty if identical","note":"short tip, or empty"}',
@@ -247,6 +247,7 @@ LANGUAGES.pt={
   correct:"Certo!",
   sample:{said:"Yo voy a comer",better:"Eu vou comer",why:"Ir takes no a before the verb.",line:"Yo voy a comer con mi amigo"},
   writePrompt:"Write two or three sentences in Portuguese about what you did last weekend.",
+  resources:[["Practice Portuguese","https://www.practiceportuguese.com/blog/learn-european-portuguese-free/","Free short dialogues and a podcast, in European Portuguese."],["RTP Play","https://www.rtp.pt/play/","TV and radio from Portugal's public broadcaster."],["Easy Portuguese","https://www.youtube.com/results?search_query=easy+portuguese","Street interviews on YouTube, with subtitles."]],
   missions:[
     "Text a friend or classmate one sentence in Portuguese.",
     "Name ten things in your room out loud.",

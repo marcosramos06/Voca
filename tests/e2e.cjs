@@ -92,6 +92,10 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     await p.click('a.btn[href="#hoje"]'); await p.waitForSelector(".wall i");
     await p.screenshot({ path: `${shots}/4-home-fr.png` });
 
+    // every language has complete content
+    const langs = await p.evaluate(() => Object.values(LANGUAGES).map((l) => ({ code: l.code, cards: l.cards.length, scenes: l.scenarios.length, rounds: l.diagnostic.flat().length, res: l.resources.length, hello: l.hello, pics: pictureCards(l.code).filter((c) => (l.code === "pt" ? c.br : c[l.code])).length, missing: l.diagnostic.flat().filter((q) => !q.o.length || q.o.includes(q.a)).length, dup: l.cards.length - new Set(l.cards.map((c) => c.id)).size })));
+    assert.deepEqual(langs.map((l) => l.code), ["pt", "fr", "it", "es"]);
+    for (const l of langs) { assert.ok(l.cards >= 90, l.code); assert.equal(l.rounds, 20); assert.equal(l.pics, 63); assert.equal(l.res, 3); assert.equal(l.missing, 0); assert.equal(l.dup, 0); assert.ok(l.hello); }
     // failing round two stops at A1
     await p.evaluate(() => { startTest(); });
     for (let i = 0; i < 5; i++) await p.evaluate(() => answerTest(D.items[D.i].a));
@@ -106,6 +110,25 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     // grading
     const g = await p.evaluate(() => [grade("le pain", ["le pain"]), grade("pain", ["le pain"]), grade("la pain", ["le pain"]), grade("autocarro", ["ônibus", "autocarro"]), grade("onibus", ["ônibus"]), grade("o trem", ["trem"]), grade("j’ai faim", ["J'ai faim"]), grade("", ["x"])]);
     assert.deepEqual(g, ["good", "good", "bad", "good", "accent", "good", "good", "bad"]);
+
+    // Italian and Spanish, with the language you already know
+    for (const code of ["it", "es"]) {
+      await p.evaluate((c) => { S.lang = c; location.hash = "hoje"; render(); }, code);
+      for (const t of ["hoje", "conversa", "cartoes", "ponte", "sons", "fotos", "perfil"]) {
+        await p.evaluate((x) => (location.hash = x), t); await p.waitForTimeout(150);
+        assert.equal(await overflow(p), false, `overflow on ${code} ${t}`);
+        if (code === "es" && t === "ponte") await p.screenshot({ path: `${shots}/es-ponte.png` });
+        if (t === "hoje") await p.screenshot({ path: `${shots}/${code}-home.png` });
+      }
+    }
+    assert.equal(await p.evaluate(() => { S.lang = "es"; S.knows = "es"; return knows(); }), "", "the language you learn can't be the one you know");
+    assert.equal(await p.evaluate(() => { S.knows = "pt"; return knows() + knownName(); }), "ptPortuguese");
+    assert.deepEqual(await p.evaluate(() => [grade("il cane", ["il cane"]), grade("cane", ["il cane"]), grade("perro", ["el perro"])]), ["good", "good", "good"]);
+    assert.match(await p.evaluate(() => { C.lang = null; ensureScene(); return rulesText(); }), /English and Portuguese/);
+    assert.match(await p.evaluate(() => { const c = pictureCards("es")[0]; return hintTag(c); }), /o c/);
+    await p.evaluate(() => { S.lang = "it"; S.knows = "fr"; location.hash = "ponte"; render(); });
+    assert.equal(await p.locator('[data-act="build-bridge"]').count(), 1);
+    await p.evaluate(() => { S.lang = "pt"; S.knows = "es"; S.lang = "fr"; location.hash = "hoje"; render(); });
 
     // French conversation through the account
     await p.evaluate(() => { location.hash = "conversa"; }); await p.waitForTimeout(150);
@@ -180,7 +203,7 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     await p.evaluate(() => { S.lang = "fr"; location.hash = "fotos"; }); await p.waitForSelector(".sets");
     assert.equal(await p.evaluate(() => PICTURE_RAW.length), 63);
     assert.equal(await p.evaluate(() => new Set(PICTURE_RAW.map((r) => r[6])).size), 63);
-    assert.equal(await p.evaluate(() => PICTURE_RAW.every((r) => r.length === 9 && r[7] && r[8])), true);
+    assert.equal(await p.evaluate(() => PICTURE_RAW.every((r) => r.length === 10 && r[7] && r[8] && r[9])), true);
     await p.click('[data-act="pic-learn"][data-id="food"]'); await p.waitForSelector(".gallery .pic-card");
     assert.equal(await p.locator(".pic-card").count(), 16);
     assert.match(await p.textContent(".pic-card .credit"), /Photo: /);
