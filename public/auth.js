@@ -18,6 +18,7 @@ async function loadAccountConfig() {
     const c = await r.json();
     Account.url = c.supabaseUrl || "";
     Account.key = c.supabaseKey || "";
+    Account.vapid = c.vapidKey || "";
   } catch (e) {}
   return Account.enabled;
 }

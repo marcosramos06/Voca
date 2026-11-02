@@ -241,6 +241,22 @@ LANGUAGES.fr = {
   correct: "Bien joué !", start: "Un petit test ?",
   sample: { said: "Je veux", better: "Je voudrais", why: "Softer, and the natural way to order in French.", line: "Je veux un croissant, por favor" },
   writePrompt: "Write two or three sentences in French about what you did last weekend.",
+  missions: [
+    "Text a friend one sentence in French.",
+    "Name ten things in your room out loud.",
+    "Say three things you did yesterday, using the passé composé.",
+    "Describe your walk to class out loud as you go.",
+    "Plan tomorrow out loud, using je vais plus a verb.",
+    "Listen to three minutes of French and write down one new word.",
+    "Explain lacrosse to an imaginary friend in four sentences.",
+    "Write your grocery list in French.",
+    "Set your phone to French for one hour.",
+    "Describe what you ate today in three sentences.",
+    "Say how you feel today and why, in two sentences.",
+    "Order an imaginary coffee out loud, using vous.",
+    "Practice the French r with five words of your choice.",
+    "Introduce yourself out loud in under 30 seconds, with no notes."
+  ],
   cards, rules, genders, falseFriends, bridges, traps: [], sounds, scenarios, diagnostic
 };
 })();

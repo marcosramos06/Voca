@@ -237,6 +237,7 @@ const DIAGNOSTIC=[
  {listen:"Ainda que fizesse frio, saímos para correr.",q:"What did you hear?",a:"Even though it was cold, we went out for a run.",o:["It's cold, so we stayed inside.","We'll run if it gets cold.","We ran because it was warm."]}
 ]
 ];
+const today0=()=>new Date().toISOString().slice(0,10);
 LANGUAGES.pt={
   code:"pt",name:"Portuguese",native:"Português",voice:"pt-BR",
   tabs:["Hoje","Conversa","Cartões","Ponte","Sons"],
@@ -246,6 +247,32 @@ LANGUAGES.pt={
   correct:"Certo!",
   sample:{said:"Yo voy a comer",better:"Eu vou comer",why:"Ir takes no a before the verb.",line:"Yo voy a comer con mi amigo"},
   writePrompt:"Write two or three sentences in Portuguese about what you did last weekend.",
+  missions:[
+    "Text a friend or classmate one sentence in Portuguese.",
+    "Name ten things in your room out loud.",
+    "Say three things you did yesterday, using the past tense.",
+    "Describe your walk to class out loud as you go.",
+    "Ask your Portuguese instructor one question in Portuguese.",
+    "Plan tomorrow out loud, using vou plus a verb.",
+    "Listen to three minutes of Portuguese and write down one new word.",
+    "Explain lacrosse to an imaginary friend in four sentences.",
+    "Write your grocery list in Portuguese.",
+    "Set your phone to Portuguese for one hour.",
+    "Describe what you ate today in three sentences.",
+    "Say how you feel today and why, in two sentences.",
+    "Write down what a teammate did today, in Portuguese.",
+    "Introduce yourself out loud in under 30 seconds, with no notes."
+  ],
+  placeMissions:[
+    "Order your coffee in Portuguese, with no English.",
+    "Ask a shop worker a question in Portuguese.",
+    "Ask someone for directions, even if you know the way.",
+    "Read a menu and order something new.",
+    "Buy your metro or bus ticket in Portuguese.",
+    "Start a short chat with a classmate in Portuguese.",
+    "Ask what a word on a sign means."
+  ],
+  placeStart:(s)=>today0()>=s.lisbon,
   cards:CARDS,rules:RULES_ES,genders:GENDERS,falseFriends:FALSE,bridges:BRIDGES,traps:TRAPS,sounds:SOUNDS,scenarios:SCENARIOS,diagnostic:DIAGNOSTIC
 };
 })();

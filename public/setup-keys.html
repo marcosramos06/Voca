@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Voca reminder keys</title>
+<style>
+:root{color-scheme:light dark}
+body{font:18px/1.5 -apple-system,"Segoe UI",system-ui,sans-serif;max-width:640px;margin:0 auto;padding:32px 20px}
+h1{font-weight:400;margin:0 0 8px}
+button{font:inherit;font-weight:600;min-height:52px;padding:0 20px;border-radius:12px;border:1px solid currentColor;background:none;color:inherit;cursor:pointer}
+label{display:block;margin-top:22px;font-weight:600}
+textarea{width:100%;box-sizing:border-box;font:15px ui-monospace,Menlo,monospace;padding:12px;border-radius:10px;margin-top:6px}
+</style>
+</head>
+<body>
+<h1>Reminder keys</h1>
+<p>This page makes the two keys for daily reminders. They're created on this device and never sent anywhere.</p>
+<button id="make">Make keys</button>
+<div id="out" hidden>
+  <label for="pub">VAPID_PUBLIC_KEY</label><textarea id="pub" rows="3" readonly></textarea>
+  <label for="priv">VAPID_PRIVATE_KEY</label><textarea id="priv" rows="2" readonly></textarea>
+  <p>Paste both into Vercel now. Leaving this page clears them.</p>
+</div>
+<script src="/setup-keys.js"></script>
+</body>
+</html>

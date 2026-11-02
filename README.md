@@ -41,6 +41,24 @@ Use the same email as your Supabase account, because Supabase's built-in email s
 
 Free Supabase projects can pause after about a week of low activity. Your data is kept, and you can restore the project from its dashboard.
 
+## Turn on daily reminders
+
+1. Run everything in `supabase/schema.sql` again in the Supabase SQL Editor. It's safe to repeat.
+2. Open `/setup-keys.html` on your Voca address and tap **Make keys**.
+3. Add these in Vercel, then redeploy:
+
+| Name | Value |
+|---|---|
+| `VAPID_PUBLIC_KEY` | The public key |
+| `VAPID_PRIVATE_KEY` | The private key |
+| `VAPID_CONTACT` | `mailto:` plus your email |
+| `SUPABASE_SERVICE_KEY` | Your Supabase secret key. Keep this private. |
+| `CRON_SECRET` | A long random phrase |
+
+4. On an iPhone, open Voca from the Home Screen and turn reminders on in Profile.
+
+Reminders run twice a day and only reach people in their early evening who haven't practiced. Timing can vary by up to an hour on Vercel's free plan.
+
 ## Speaking and photos
 
 Talk mode uses the browser's speech recognition, which works in Chrome and Safari on a Mac and usually in Safari tabs on an iPhone. It may not work in an app added to the iPhone Home Screen, so Voca falls back to keyboard dictation there. Pronunciation checks show whether speech recognition understood you. They are a guide, not a score.

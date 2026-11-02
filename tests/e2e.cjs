@@ -152,6 +152,18 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     assert.match(await p.textContent("#msgs .m.a"), /Já escolheu/);
     await p.evaluate(() => { S.lang = "fr"; C.lang = null; location.hash = "cartoes"; render(); });
 
+    // daily mission: report back, get feedback, earn the first stamp
+    await p.evaluate(() => { location.hash = "hoje"; }); await p.waitForSelector("#mission-note");
+    const firstMission = await p.textContent(".mission-task");
+    await p.click('[data-act="mission-skip"]');
+    assert.notEqual(await p.textContent(".mission-task"), firstMission);
+    await p.fill("#mission-note", "J'ai parlé avec mon ami"); await p.click('[data-act="mission-done"]');
+    await p.waitForSelector(".mission h3");
+    await p.waitForFunction(() => P().missions[today()].done && S.earned.mission1);
+    await p.waitForSelector(".streak-chip");
+    assert.ok(await p.evaluate(() => S.earned.mission1));
+    await p.screenshot({ path: `${shots}/mission-done.png` });
+
     // Portuguese keeps both country forms and its own progress
     await p.click('[data-act="lang"][data-v="pt"]');
     assert.equal(await p.evaluate(() => document.documentElement.dataset.lang), "pt");
@@ -171,6 +183,9 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     await p.waitForFunction(() => /Heard "bida"/.test(document.body.innerText));
 
     // profile
+    await p.evaluate(() => (location.hash = "perfil")); await p.waitForSelector(".stamps");
+    await p.screenshot({ path: `${shots}/stamps.png` });
+    await p.evaluate(() => (location.hash = "hoje")); await p.waitForTimeout(100);
     await p.click(".who"); await p.waitForSelector("#profile-name");
     assert.equal(await overflow(p), false, "profile overflow");
     await p.fill("#profile-name", "Marcos"); await p.keyboard.press("Tab");
