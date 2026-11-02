@@ -13,16 +13,19 @@ const LEVEL_NOTE = {
 };
 const ERR = { spanish: "Spanish carryover", gender: "Gender", verb: "Verb forms", prep: "Prepositions, contractions", vocab: "Word choice", spelling: "Spelling, accents" };
 const blankProfile = () => ({ cards: {}, custom: [], log: {}, errs: {}, ff: { r: 0, t: 0 }, level: null, updated: 0 });
-const blank = () => ({ v: 2, updated: 0, onboarded: false, lang: "pt", lead: "auto", lisbon: "2027-06-01", slow: false, auto: false, profiles: { pt: blankProfile(), fr: blankProfile() } });
+const blank = () => ({ v: 2, updated: 0, onboarded: false, name: "", lang: "pt", lead: "auto", lisbon: "2027-06-01", slow: false, auto: false, profiles: { pt: blankProfile(), fr: blankProfile() } });
 
 function fromStorage() {
   try {
     const now = localStorage.getItem(KEY);
-    if (now) { const s = JSON.parse(now); return { ...blank(), ...s, profiles: { ...blank().profiles, ...s.profiles } }; }
+    if (now) {
+      const s = JSON.parse(now), name = "name" in s ? s.name : "Marcos";
+      return { ...blank(), ...s, name, profiles: { ...blank().profiles, ...s.profiles } };
+    }
     const old = localStorage.getItem(OLD_KEY);
     if (old) {
       const o = JSON.parse(old), s = blank();
-      s.onboarded = true; s.lead = o.lead || "auto"; s.lisbon = o.lisbon || s.lisbon; s.slow = !!o.slow; s.auto = !!o.auto;
+      s.onboarded = true; s.name = "Marcos"; s.lead = o.lead || "auto"; s.lisbon = o.lisbon || s.lisbon; s.slow = !!o.slow; s.auto = !!o.auto;
       s.profiles.pt = { ...blankProfile(), cards: o.cards || {}, custom: o.custom || [], log: o.log || {}, errs: o.errs || {}, ff: o.ff || { r: 0, t: 0 }, updated: o.updated || 0 };
       return s;
     }
@@ -67,6 +70,7 @@ function mergeState(local, remote) {
     out.profiles[code] = (b.updated || 0) > (a.updated || 0) ? { ...blankProfile(), ...b } : a;
   }
   out.onboarded = local.onboarded || remote.onboarded;
+  out.name = out.name || local.name || remote.name || "";
   out.lang = local.lang;
   return out;
 }
@@ -97,6 +101,14 @@ function speak(text, v) {
   catch (e) { toast("Audio could not play here."); }
 }
 const ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h2.5L9 2.5v11l-3.5-3H3zM11 5a4 4 0 0 1 0 6l-.9-.9a2.7 2.7 0 0 0 0-4.2z"/></svg>';
+const line = (d) => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICONS = {
+  hoje: line('<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>'),
+  conversa: line('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+  cartoes: line('<rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 4h10a2 2 0 0 1 2 2v10"/>'),
+  ponte: line('<path d="M3 18v-3a9 9 0 0 1 18 0v3M3 18h18M8 18v-5M12 18v-6M16 18v-5"/>'),
+  sons: line('<path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/>'),
+};
 const say = (t, v) => `<button class="say" data-act="say" data-t="${esc(t)}" data-v="${v}" aria-label="Listen: ${esc(t)}">${ICON}</button>`;
 
 /* forms: one line for French, two for Portuguese when the countries differ */
@@ -157,8 +169,8 @@ const ai = Promise.resolve(sample);
 const errCopy = (e) => {
   switch (e && e.code) {
     case "offline": return "You're offline. Cards, bridges and sounds still work.";
-    case "needs_sign_in": return Account.enabled ? "Sign in to turn on your partner." : "Enter your app passcode in Settings to turn on your partner.";
-    case "bad_passcode": return "That passcode doesn't match. Update it in Settings.";
+    case "needs_sign_in": return Account.enabled ? "Sign in to turn on your partner." : "Enter your app passcode in your Profile to turn on your partner.";
+    case "bad_passcode": return "That passcode doesn't match. Update it in your Profile.";
     case "bad_session": return "Your sign-in expired. Sign in again.";
     case "not_allowed": return "This account isn't on the app's allowed list yet.";
     case "not_configured": return "The server isn't set up yet.";
@@ -185,7 +197,7 @@ function rulesText() {
     ? `Forms valid in Brazil or Portugal are never errors, even when they mismatch the speaking variety: note the other country's form in "variety" instead.`
     : `Leave "variety" empty.`;
   const other = S.lang === "pt" ? `"other":"the same fix in the other country's Portuguese, or empty if identical",` : "";
-  return `You are a speaking partner in a role-play for Marcos, a young man who speaks English and Spanish and is learning ${L().name} at about ${level} level. He is typing or dictating, so ignore capitalization and missing punctuation.
+  return `You are a speaking partner in a role-play for ${S.name || "a learner"}, who speaks English and Spanish and is learning ${L().name} at about ${level} level. He is typing or dictating, so ignore capitalization and missing punctuation.
 Role: ${s.who}.${(C.sc === "livre" || C.sc === "libre") && C.custom ? ` Topic he chose: ${C.custom.slice(0, 200)}.` : ""}
 Speak ${speech}.
 Reply in 1 to 3 short sentences at ${level} level, stretching him slightly. Stay in character, and end with a question or something he must react to. Never switch to English or Spanish in "reply".
@@ -292,7 +304,7 @@ async function submitWriting() {
 /* ---------- screens ---------- */
 const TAB_IDS = ["hoje", "conversa", "cartoes", "ponte", "sons"];
 let tab = "hoje", pSeg = "es", restoreArmed = false, welcomeMode = "signin", welcomeErr = "", welcomeBusy = false, welcomeNote = "", homeOpen = false;
-const fromHash = () => { const h = location.hash.slice(1); return TAB_IDS.includes(h) || h === "teste" ? h : "hoje"; };
+const fromHash = () => { const h = location.hash.slice(1); return TAB_IDS.includes(h) || h === "teste" || h === "perfil" ? h : "hoje"; };
 tab = fromHash();
 window.addEventListener("hashchange", () => { homeOpen = false; tab = fromHash(); if (tab !== "teste") D = null; render(); scrollTo(0, 0); });
 
@@ -303,14 +315,18 @@ function chrome() {
   const landing = !S.onboarded || homeOpen, inTest = tab === "teste";
   $("#top").hidden = landing;
   $("#nav").hidden = landing || inTest;
+  document.body.classList.toggle("no-chrome", landing || inTest);
+  document.body.classList.toggle("landing-page", landing);
   $("#view").className = "wrap" + (landing || inTest ? " bare" : "");
-  $("#top").innerHTML = `<a class="brand" href="#hoje" data-act="home" aria-label="Voca home">Voca</a><div class="seg" role="group" aria-label="Language">${Object.values(LANGUAGES).map((l) => `<button data-act="lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}">${l.code.toUpperCase()}</button>`).join("")}</div>`;
-  $("#nav").innerHTML = TAB_IDS.map((t, i) => `<a href="#${t}" ${t === tab ? 'aria-current="page"' : ""}>${L().tabs[i]}</a>`).join("");
+  const initial = esc((S.name || Account.email || "?").trim().charAt(0).toUpperCase());
+  $("#top").innerHTML = `<a class="brand" href="#hoje" data-act="home" aria-label="Voca home">Voca</a><div class="top-right"><div class="seg" role="group" aria-label="Language">${Object.values(LANGUAGES).map((l) => `<button data-act="lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}">${l.code.toUpperCase()}</button>`).join("")}</div><a class="who" href="#perfil" aria-label="Profile" ${tab === "perfil" ? 'aria-current="page"' : ""}><span class="avatar">${initial}</span><span class="who-name">${esc(S.name || "Profile")}</span></a></div>`;
+  $("#nav").innerHTML = TAB_IDS.map((t, i) => `<a href="#${t}" ${t === tab ? 'aria-current="page"' : ""}>${ICONS[t]}<span>${L().tabs[i]}</span><kbd>${i + 1}</kbd></a>`).join("");
 }
 
 function welcome() {
   const signedIn = Account.enabled && Account.signedIn;
   const form = signedIn ? `<div class="stack"><button class="btn wide" data-act="guest">Continue</button><p class="small muted">Signed in as ${esc(Account.email)}</p><div><button class="link" data-act="sign-out">Sign out</button></div></div>` : Account.enabled ? `<form class="stack" id="auth-form">
+      ${welcomeMode === "signup" ? `<label class="field">Your name<input type="text" id="auth-name" autocomplete="given-name" value="${esc(S.name)}"></label>` : ""}
       <label class="field">Email<input type="email" id="auth-email" autocomplete="email" autocapitalize="off" required></label>
       <label class="field">Password<input type="password" id="auth-password" autocomplete="${welcomeMode === "signup" ? "new-password" : "current-password"}" minlength="8" required></label>
       ${welcomeErr ? `<p class="error" role="alert">${esc(welcomeErr)}</p>` : ""}
@@ -318,13 +334,13 @@ function welcome() {
       <button class="btn wide" type="submit" ${welcomeBusy ? "disabled" : ""}>${welcomeBusy ? "One moment..." : welcomeMode === "signup" ? "Create account" : "Sign in"}</button>
       <button class="link" type="button" data-act="auth-mode">${welcomeMode === "signup" ? "I already have an account" : "Create an account"}</button>
     </form>` : "";
-  return `<section class="landing">
+  return `<section class="landing"><div class="landing-art" aria-hidden="true"></div><div class="landing-main">
     <div class="stack" style="gap:10px"><h1>Voca</h1><p class="muted" style="max-width:34ch;font-size:1.15rem">Practice speaking the language you actually plan to use.</p></div>
     <div class="stack"><div class="eyebrow">I want to learn</div><div class="langs">${Object.values(LANGUAGES).map((l) => `<button data-act="pick-lang" data-v="${l.code}" aria-pressed="${l.code === S.lang}"><span>${l.native}</span><span>${l.code === S.lang ? "Selected" : l.name}</span></button>`).join("")}</div></div>
     ${form}
     ${signedIn ? "" : `<button class="link" data-act="guest">${Account.enabled ? "Continue without an account" : "Get started"}</button>`}
     ${Account.enabled && !signedIn ? `<p class="small muted">Without an account, progress stays on this device.</p>` : ""}
-  </section>`;
+  </div></section>`;
 }
 
 function hoje() {
@@ -335,26 +351,54 @@ function hoje() {
   const days = [...Array(14)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 13 + i); const k = dayKey(d), o = P().log[k]; return `<i class="${o && (o.c || o.t) ? "on" : ""}" title="${k}"></i>`; }).join("");
   const errs = Object.entries(P().errs || {}).sort((a, b) => b[1] - a[1]), max = errs[0] ? errs[0][1] : 1;
   const sub = S.lang === "pt" && dT > 0 ? `${dT} days to Lisbon` : P().level ? `Level ${P().level}` : "";
-  const account = Account.enabled ? `<div class="stack" style="gap:6px"><h3>Account</h3>${Account.signedIn
-    ? `<p class="small muted">Signed in as ${esc(Account.email)}. ${syncState === "waiting" ? "Your latest changes will sync when you're back online." : "Your progress follows your account."}</p><div><button class="btn ghost small" data-act="sign-out">Sign out</button></div>`
-    : `<p class="small muted">Sign in to keep your progress across devices.</p><div><button class="btn small" data-act="show-signin">Sign in</button></div>`}</div>` : "";
-  return `<section class="hero"><h1>${esc(lang.greet(h))}, Marcos.</h1>${sub ? `<p class="muted">${esc(sub)}</p>` : ""}</section>
+  return `<section class="hero"><div class="hero-text"><h1>${esc(lang.greet(h))}${S.name ? `, ${esc(S.name)}` : ""}.</h1>${sub ? `<p class="muted">${esc(sub)}</p>` : ""}</div></section>
   ${P().level ? "" : `<section class="stack"><div class="notice stack" style="gap:8px"><b>Find your level</b><p class="small">A 20-question test sets how your partner speaks to you. It takes about 5 minutes.</p><div><button class="btn small" data-act="test">Start the test</button></div></div></section>`}
-  <section class="stack" style="gap:8px"><div class="wall" role="img" aria-label="${mast} of ${cs.length} words complete">${tiles}</div><p class="small muted">${mast} of ${cs.length} words complete</p></section>
-  <section class="list">
-    <a class="rowlink" href="#conversa" data-act="go-scene" data-id="${sn.id}"><span>Speak</span><span>${esc(sn.t)}</span></a>
-    <a class="rowlink" href="#cartoes"><span>Recall</span><span>${Math.min(q.length, GOAL_C)} today</span></a>
-    <a class="rowlink" href="#ponte"><span>Bridge</span><span>${esc(br.t)}</span></a>
-    <a class="rowlink" href="#sons"><span>Sounds</span><span>${lang.sounds.length} drills</span></a>
-  </section>
-  <section class="stack"><div class="row between"><h3>Today's bridge</h3></div><div class="small"><span class="tag">ES</span>${esc(br.es)}</div>${forms(br)}<p class="small muted">${esc(br.n)}</p></section>
-  <section class="stack"><h3>Last 14 days</h3><div class="days">${days}</div><p class="small muted">${l.c} cards and ${l.t} replies today. Goal: ${GOAL_C} cards and ${GOAL_T} replies.</p></section>
-  <section class="stack"><h3>What trips you up</h3>${errs.length ? errs.slice(0, 5).map((e) => `<div class="bar"><span>${ERR[e[0]] || e[0]}</span><b>${e[1]}</b><div class="track"><i style="width:${Math.round((e[1] / max) * 100)}%"></i></div></div>`).join("") : `<p class="small muted">Your conversation corrections build this list, and your partner uses it to focus on your weak spots.</p>`}</section>
-  <section class="stack" style="gap:20px;border-top:1px solid var(--line);padding-top:22px"><h2>Settings</h2>
-    ${account}
-    <div class="stack" style="gap:6px"><h3>Level</h3><p class="small muted">${P().level ? `Your ${lang.name} level is ${P().level}.` : "No level yet."}</p><div><button class="btn ghost small" data-act="test">${P().level ? "Retake the test" : "Start the test"}</button></div></div>
-    ${S.lang === "pt" ? `<div class="stack" style="gap:6px"><h3>Portuguese forms</h3><p class="small muted">Auto shows Brazil first until May 1, 2027, then Portugal.</p><div class="seg" role="group" aria-label="Forms shown first">${[["auto", "Auto"], ["br", "Brazil"], ["pt", "Portugal"]].map((o) => `<button data-act="lead" data-v="${o[0]}" aria-pressed="${S.lead === o[0]}">${o[1]}</button>`).join("")}</div>
-      <label class="field">Lisbon arrival<input type="date" id="lisbon-date" value="${esc(S.lisbon)}"></label></div>` : ""}
+  <div class="dash">
+    <div class="stack" style="gap:30px">
+      <section class="list">
+        <a class="rowlink" href="#conversa" data-act="go-scene" data-id="${sn.id}"><span>${ICONS.conversa}Speak</span><span>${esc(sn.t)}</span></a>
+        <a class="rowlink" href="#cartoes"><span>${ICONS.cartoes}Recall</span><span>${Math.min(q.length, GOAL_C)} today</span></a>
+        <a class="rowlink" href="#ponte"><span>${ICONS.ponte}Bridge</span><span>${esc(br.t)}</span></a>
+        <a class="rowlink" href="#sons"><span>${ICONS.sons}Sounds</span><span>${lang.sounds.length} drills</span></a>
+      </section>
+      <section class="stack" style="gap:8px"><h3>Your words</h3><div class="wall" role="img" aria-label="${mast} of ${cs.length} words complete">${tiles}</div><p class="small muted">${mast} of ${cs.length} complete</p></section>
+    </div>
+    <div class="stack" style="gap:30px">
+      <section class="stack"><h3>Today's bridge</h3><div class="small"><span class="tag">ES</span>${esc(br.es)}</div>${forms(br)}<p class="small muted">${esc(br.n)}</p></section>
+      <section class="stack"><h3>Last 14 days</h3><div class="days">${days}</div><p class="small muted">${l.c} cards and ${l.t} replies today. Goal: ${GOAL_C} cards and ${GOAL_T} replies.</p></section>
+      <section class="stack"><h3>What trips you up</h3>${errs.length ? errs.slice(0, 5).map((e) => `<div class="bar"><span>${ERR[e[0]] || e[0]}</span><b>${e[1]}</b><div class="track"><i style="width:${Math.round((e[1] / max) * 100)}%"></i></div></div>`).join("") : `<p class="small muted">Your conversation corrections build this list, and your partner uses it to focus on your weak spots.</p>`}</section>
+    </div>
+  </div>`;
+}
+
+function streak() {
+  const days = new Set();
+  for (const p of Object.values(S.profiles)) for (const [k, o] of Object.entries(p.log || {})) if (o.c || o.t) days.add(k);
+  const d = new Date(); let n = 0;
+  if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+  while (days.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function perfil() {
+  const profiles = Object.values(LANGUAGES).map((lang) => {
+    const p = S.profiles[lang.code], total = lang.cards.length + (p.custom || []).length;
+    const done = Object.values(p.cards || {}).filter((c) => c.b >= 5).length;
+    const logs = Object.values(p.log || {});
+    return { lang, p, total, done, cards: logs.reduce((n, o) => n + (o.c || 0), 0), replies: logs.reduce((n, o) => n + (o.t || 0), 0) };
+  });
+  const sumCards = profiles.reduce((n, x) => n + x.cards, 0), sumReplies = profiles.reduce((n, x) => n + x.replies, 0);
+  const initial = esc((S.name || Account.email || "?").trim().charAt(0).toUpperCase());
+  return `<section class="hero"><div class="hero-text row" style="gap:16px"><span class="avatar big">${initial}</span><div style="min-width:0"><h1 style="font-size:clamp(2rem,6vw,2.7rem)">${esc(S.name || "Your profile")}</h1>${Account.signedIn ? `<p class="muted" style="overflow-wrap:anywhere">${esc(Account.email)}</p>` : ""}</div></div></section>
+  <section class="stats"><div><b>${streak()}</b><span>day streak</span></div><div><b>${sumCards}</b><span>cards reviewed</span></div><div><b>${sumReplies}</b><span>replies sent</span></div></section>
+  <section class="stack"><h2>Languages</h2><div class="list">${profiles.map((x) => `<div class="lang-row" data-lang="${x.lang.code}"><div style="min-width:0"><div class="lang-name">${x.lang.native}</div><div class="small muted">${x.p.level ? `Level ${x.p.level}` : "No level yet"} · ${x.done} of ${x.total} words</div></div><button class="btn ghost small" data-act="test-lang" data-v="${x.lang.code}">${x.p.level ? "Retake test" : "Take test"}</button></div>`).join("")}</div></section>
+  <section class="settings"><h2>Settings</h2>
+    <label class="field">Your name<input type="text" id="profile-name" autocomplete="given-name" value="${esc(S.name)}"></label>
+    <div class="stack" style="gap:6px"><h3>Portuguese forms</h3><p class="small muted">Auto shows Brazil first until May 1, 2027, then Portugal.</p><div class="seg" role="group" aria-label="Forms shown first">${[["auto", "Auto"], ["br", "Brazil"], ["pt", "Portugal"]].map((o) => `<button data-act="lead" data-v="${o[0]}" aria-pressed="${S.lead === o[0]}">${o[1]}</button>`).join("")}</div>
+      <label class="field">Lisbon arrival<input type="date" id="lisbon-date" value="${esc(S.lisbon)}"></label></div>
+    <label class="row small" style="gap:8px"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label>
+    ${Account.enabled ? `<div class="stack" style="gap:6px"><h3>Account</h3>${Account.signedIn
+      ? `<p class="small muted">${syncState === "waiting" ? "Your latest changes will sync when you're back online." : "Your progress follows your account."}</p><div><button class="btn ghost small" data-act="sign-out">Sign out</button></div>`
+      : `<p class="small muted">Sign in to keep your progress across devices.</p><div><button class="btn small" data-act="show-signin">Sign in</button></div>`}</div>` : ""}
     ${Account.signedIn ? "" : `<div class="stack" style="gap:6px"><label class="field" for="pass-settings"><b>App passcode</b></label><p class="small muted">Without an account, this turns on your partner on this device.</p><div class="row"><input type="password" id="pass-settings" autocomplete="off" value="${esc(getPass())}" style="flex:1;min-width:0"><button class="btn small" data-act="save-pass" data-src="pass-settings">Save and test</button></div></div>`}
     <div class="stack" style="gap:6px"><label class="field" for="backup-text"><b>Backup</b></label><p class="small muted">Copy your progress into Notes now and then. Paste it here to restore it.</p><textarea id="backup-text" rows="2" autocomplete="off" spellcheck="false" placeholder="Backup text appears here"></textarea><div class="row"><button class="btn ghost small" data-act="backup">Copy backup</button><button class="btn ghost small" data-act="restore">${restoreArmed ? "Tap again to replace progress" : "Restore"}</button></div></div>
   </section>`;
@@ -363,11 +407,8 @@ function hoje() {
 function conversaView() {
   ensureScene();
   const lang = L();
-  return `<section class="stack">
-    <div class="row between"><h2>${esc(sc().t)}</h2>${S.lang === "pt" ? `<div class="seg" role="group" aria-label="Partner accent"><button data-act="accent" data-v="br" aria-pressed="${accent() === "br"}">Brazil</button><button data-act="accent" data-v="pt" aria-pressed="${accent() === "pt"}">Lisbon</button></div>` : ""}</div>
-    <div class="scenes">${lang.scenarios.map((s) => `<button data-act="scene" data-id="${s.id}" aria-pressed="${s.id === C.sc}">${esc(s.t)}</button>`).join("")}</div>
-    ${C.sc === "livre" || C.sc === "libre" ? `<input type="text" id="free-topic" placeholder="Topic, such as music or Boston" value="${esc(C.custom)}" aria-label="Conversation topic">` : ""}
-  </section>
+  return `<div class="convo">
+  <div class="c-head row between"><h2>${esc(sc().t)}</h2>${S.lang === "pt" ? `<div class="seg" role="group" aria-label="Partner accent"><button data-act="accent" data-v="br" aria-pressed="${accent() === "br"}">Brazil</button><button data-act="accent" data-v="pt" aria-pressed="${accent() === "pt"}">Lisbon</button></div>` : ""}</div>
   <section class="msgs" id="msgs" aria-live="polite"></section>
   <section class="composer">
     ${Account.signedIn || getPass() ? "" : `<div class="notice stack" style="gap:7px">${Account.enabled ? `<span>Sign in to turn on your partner.</span><div><button class="btn small" data-act="show-signin">Sign in</button></div>` : `<label for="pass-inline">Enter your app passcode to turn on your partner.</label><div class="row"><input type="password" id="pass-inline" autocomplete="off" style="flex:1;min-width:0"><button class="btn small" data-act="save-pass" data-src="pass-inline">Save</button></div>`}</div>`}
@@ -375,7 +416,11 @@ function conversaView() {
     <textarea id="chat-input" rows="2" placeholder="${esc(lang.placeholder)}" aria-label="Your reply">${esc(C.draft)}</textarea>
     <div class="row between"><div class="row" id="chat-btns"></div><label class="small muted row" style="gap:6px"><input type="checkbox" id="auto-say" ${S.auto ? "checked" : ""}> Read replies aloud</label></div>
   </section>
-  <section class="stack"><h3>Useful phrases</h3><p class="small muted">To speak your reply, tap the mic on your keyboard with ${esc(lang.name)} added as a keyboard language.</p><div>${sc().ph.map((p) => `<div class="block"><div class="small muted">${esc(p[0])}</div>${forms(phraseItem(p))}</div>`).join("")}</div></section>`;
+  <aside class="c-side">
+    <div class="c-scenes stack" style="gap:6px"><h3 class="desk">Scenes</h3><div class="scenes">${lang.scenarios.map((s) => `<button data-act="scene" data-id="${s.id}" aria-pressed="${s.id === C.sc}">${esc(s.t)}</button>`).join("")}</div>${C.sc === "livre" || C.sc === "libre" ? `<input type="text" id="free-topic" placeholder="Topic, such as music or Boston" value="${esc(C.custom)}" aria-label="Conversation topic">` : ""}</div>
+    <div class="c-phrases stack"><h3>Useful phrases</h3><p class="small muted phone-only">To speak your reply, tap the mic on your keyboard with ${esc(lang.name)} added as a keyboard language.</p><p class="small muted desk">To speak on a Mac, press the dictation key or the Fn key twice, with ${esc(lang.name)} set as your dictation language.</p><div>${sc().ph.map((p) => `<div class="block"><div class="small muted">${esc(p[0])}</div>${forms(phraseItem(p))}</div>`).join("")}</div></div>
+  </aside>
+  </div>`;
 }
 function renderChat() {
   const box = $("#msgs"); if (!box) return;
@@ -417,8 +462,8 @@ function cartoes() {
     const q = queue(), due = dueCards().length;
     body = `<section class="stack"><h2>Recall</h2><p class="muted">Type each answer from memory. Words return after 1, 3, 7, 16, 35 and 80 days.</p><div class="row small muted"><span>${due} due</span><span>${q.length - due} new</span><span>${all().length} in deck</span></div><div><button class="btn" data-act="review">Start review</button></div></section>`;
   }
-  return `${body}<section class="stack" style="border-top:1px solid var(--line);padding-top:22px"><h3>Add class words</h3><p class="small muted">Paste a vocabulary list or a grammar topic. Claude builds the cards, and they come up first.</p>
-    <textarea id="import-text" rows="3" aria-label="Class vocabulary or grammar topic"></textarea><div><button class="btn ghost small" id="import-btn" data-act="import">Build cards</button></div></section>`;
+  return `<div class="narrow stack" style="gap:30px">${body}<section class="stack" style="border-top:1px solid var(--line);padding-top:22px"><h3>Add class words</h3><p class="small muted">Paste a vocabulary list or a grammar topic. Claude builds the cards, and they come up first.</p>
+    <textarea id="import-text" rows="3" aria-label="Class vocabulary or grammar topic"></textarea><div><button class="btn ghost small" id="import-btn" data-act="import">Build cards</button></div></section></div>`;
 }
 
 let FQ = null, PQ = null, quizLang = null;
@@ -431,18 +476,18 @@ function ponte() {
   const seg = two ? `<div class="seg" role="group" aria-label="Bridge type"><button data-act="pseg" data-v="es" aria-pressed="${pSeg === "es"}">From Spanish</button><button data-act="pseg" data-v="bp" aria-pressed="${pSeg === "bp"}">Brazil and Portugal</button></div>` : "";
   if (pSeg === "es") {
     return `<section class="stack"><h2>From Spanish</h2><p class="muted">Most Spanish words reach ${lang.name} through regular changes. Learn the changes, then learn where the guess fails.</p>${seg}</section>
-    <section class="stack"><div class="eyebrow">Predict the word</div><div class="prompt">${esc(PQ.es)}</div><input type="text" id="pq-input" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(PQ.val)}" aria-label="Translation" ${PQ.res ? "disabled" : ""}>
+    <div class="two"><section class="stack"><div class="eyebrow">Predict the word</div><div class="prompt">${esc(PQ.es)}</div><input type="text" id="pq-input" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(PQ.val)}" aria-label="Translation" ${PQ.res ? "disabled" : ""}>
       ${PQ.res ? `<div class="verdict ${PQ.res === "bad" ? "bad" : PQ.res === "accent" ? "warn" : "good"}">${PQ.res === "bad" ? "Answer" : PQ.res === "accent" ? "Check the accent" : esc(lang.correct)}: ${esc(PQ.tr)}</div><div class="muted small">${esc(PQ.r)}</div><div><button class="btn small" data-act="pq-next">Next word</button></div>` : `<div><button class="btn small" data-act="pq-check">Check</button></div>`}</section>
     <section class="stack"><div class="eyebrow">False friend</div><div class="prompt">${esc(FQ.f[0])}</div><div class="muted small">It looks like: ${esc(FQ.f[1])}. It really means:</div>
       <div class="opts">${FQ.opts.map((o) => `<button data-act="ff-pick" data-v="${esc(o)}" class="${FQ.pick ? (o === FQ.f[2] ? "right" : o === FQ.pick ? "wrong" : "") : ""}" ${FQ.pick ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>
-      ${FQ.pick ? `<div class="muted small">${esc(FQ.f[3])}</div><div><button class="btn small" data-act="ff-next">Next</button></div>` : ""}<div class="small muted">${P().ff.r} of ${P().ff.t} correct so far</div></section>
-    <section><h3>Sound rules</h3><div style="margin-top:8px">${lang.rules.map((r) => `<div class="block"><b style="font-weight:600">${esc(r.t)}</b><div class="pairs">${r.ex.map((e) => `<span><i>${esc(e[0])}</i> → ${esc(e[1])}</span>`).join("")}</div><div class="muted small">${esc(r.n)}</div></div>`).join("")}</div></section>
+      ${FQ.pick ? `<div class="muted small">${esc(FQ.f[3])}</div><div><button class="btn small" data-act="ff-next">Next</button></div>` : ""}<div class="small muted">${P().ff.r} of ${P().ff.t} correct so far</div></section></div>
+    <section><h3>Sound rules</h3><div class="cols" style="margin-top:8px">${lang.rules.map((r) => `<div class="block"><b style="font-weight:600">${esc(r.t)}</b><div class="pairs">${r.ex.map((e) => `<span><i>${esc(e[0])}</i> → ${esc(e[1])}</span>`).join("")}</div><div class="muted small">${esc(r.n)}</div></div>`).join("")}</div></section>
     <section class="stack"><h3>Gender flips</h3><div class="pairs">${lang.genders.map((e) => `<span><i>${esc(e[0])}</i> → ${esc(e[1])}</span>`).join("")}</div></section>
-    ${two ? "" : `<section><h3>Grammar that changes</h3><div style="margin-top:8px">${lang.bridges.map(bridgeBlock).join("")}</div></section>`}
+    ${two ? "" : `<section><h3>Grammar that changes</h3><div class="cols" style="margin-top:8px">${lang.bridges.map(bridgeBlock).join("")}</div></section>`}
     <section class="stack"><h3>False friends</h3><div class="scroll"><table><thead><tr><th>Word</th><th>Looks like</th><th>Means</th><th>Use instead</th></tr></thead><tbody>${lang.falseFriends.map((f) => `<tr><td><b>${esc(f[0])}</b></td><td>${esc(f[1])}</td><td>${esc(f[2])}</td><td class="muted">${esc(f[3])}</td></tr>`).join("")}</tbody></table></div></section>`;
   }
   return `<section class="stack"><h2>Brazil and Portugal</h2><p class="muted">Use Brazilian forms in PORTUGUE 102 unless your instructor says otherwise. Use Portugal forms in Lisbon. People there will understand you either way while you switch.</p>${seg}</section>
-    <section><h3>Grammar that changes</h3><div style="margin-top:8px">${lang.bridges.map(bridgeBlock).join("")}</div></section>
+    <section><h3>Grammar that changes</h3><div class="cols" style="margin-top:8px">${lang.bridges.map(bridgeBlock).join("")}</div></section>
     <section class="stack"><h3>Words that change meaning</h3><div class="scroll"><table><thead><tr><th>Word</th><th>Brazil</th><th>Portugal</th><th>Note</th></tr></thead><tbody>${lang.traps.map((t) => `<tr><td><b>${esc(t[0])}</b></td><td>${esc(t[1])}</td><td>${esc(t[2])}</td><td class="muted">${esc(t[3])}</td></tr>`).join("")}</tbody></table></div></section>
     <section class="stack"><h3>Everyday vocabulary</h3><input type="text" id="vocab-filter" placeholder="Filter, such as bus or café" aria-label="Filter vocabulary" value="${esc(vf)}"><div class="scroll"><table><thead><tr><th>English</th><th>Brazil</th><th>Portugal</th></tr></thead><tbody id="vocab-body">${vocabRows()}</tbody></table></div></section>`;
 }
@@ -457,23 +502,23 @@ function sons() {
     : [["Practice Portuguese", "https://www.practiceportuguese.com/blog/learn-european-portuguese-free/", "Free short dialogues and a podcast, in European Portuguese."], ["RTP Play", "https://www.rtp.pt/play/", "TV and radio from Portugal's public broadcaster."], ["Easy Portuguese", "https://www.youtube.com/results?search_query=easy+portuguese", "Street interviews on YouTube, with subtitles."]];
   return `<section class="stack"><h2>Sounds</h2><p class="muted">Listen, repeat out loud, then compare. If you hear nothing, check your iPhone's silent switch.</p>
     <label class="row small" style="gap:6px"><input type="checkbox" id="slow" ${S.slow ? "checked" : ""}> Slower audio</label><p class="small muted">${esc(voiceNote)}</p></section>
-    <section>${L().sounds.map((s) => `<div class="block"><h3>${esc(s.t)}</h3><p class="muted small">${esc(s.trap)}</p>${fr ? `<p class="small">${esc(s.d)}</p>` : `<p class="small"><span class="tag br">BR</span>${esc(s.br)}</p><p class="small"><span class="tag pt">PT</span>${esc(s.pt)}</p>`}<div class="stack" style="gap:5px;margin-top:4px">${s.w.map((w) => `<div class="line">${codes.map((c) => say(w, c)).join("")}<span>${esc(w)}</span></div>`).join("")}</div></div>`).join("")}</section>
+    <section class="cols">${L().sounds.map((s) => `<div class="block"><h3>${esc(s.t)}</h3><p class="muted small">${esc(s.trap)}</p>${fr ? `<p class="small">${esc(s.d)}</p>` : `<p class="small"><span class="tag br">BR</span>${esc(s.br)}</p><p class="small"><span class="tag pt">PT</span>${esc(s.pt)}</p>`}<div class="stack" style="gap:5px;margin-top:4px">${s.w.map((w) => `<div class="line">${codes.map((c) => say(w, c)).join("")}<span>${esc(w)}</span></div>`).join("")}</div></div>`).join("")}</section>
     <section class="stack"><h3>Real speech</h3><div class="list">${res.map((r) => `<a class="rowlink" href="${r[1]}" rel="noopener"><span>${esc(r[0])}</span><span>${esc(r[2])}</span></a>`).join("")}</div></section>`;
 }
 
 function teste() {
-  if (!D) return `<section class="landing" style="padding-top:12px"><div class="stack"><h1>Find your level</h1><p class="muted">Twenty questions at most, in four rounds. It stops when the questions get too hard, and "I don't know" is a fine answer.</p></div><button class="btn wide" data-act="test">Start the ${esc(L().name)} test</button><a class="link" href="#hoje" style="display:flex;align-items:center;justify-content:center">Not now</a></section>`;
-  if (D.done) return `<section class="landing" style="padding-top:12px"><div class="stack"><div class="eyebrow">Your ${esc(L().name)} level</div><h1>${esc(P().level)}</h1><p class="muted">${esc(LEVEL_NOTE[P().level])}</p></div>
+  if (!D) return `<section class="result narrow"><div class="stack"><h1>Find your level</h1><p class="muted">Twenty questions at most, in four rounds. It stops when the questions get too hard, and "I don't know" is a fine answer.</p></div><button class="btn wide" data-act="test">Start the ${esc(L().name)} test</button><a class="link" href="#hoje" style="display:flex;align-items:center;justify-content:center">Not now</a></section>`;
+  if (D.done) return `<section class="result narrow"><div class="stack"><div class="eyebrow">Your ${esc(L().name)} level</div><h1>${esc(P().level)}</h1><p class="muted">${esc(LEVEL_NOTE[P().level])}</p></div>
     <div class="stack"><label class="field" for="write-text"><b>Optional: a writing check</b><span>${esc(L().writePrompt)}</span></label><textarea id="write-text" rows="4">${esc(D.write)}</textarea>${D.writeOut ? `<div class="notice" style="white-space:pre-wrap">${esc(D.writeOut)}</div>` : ""}<div><button class="btn ghost small" data-act="write" ${D.writeBusy ? "disabled" : ""}>Check my writing</button></div></div>
     <a class="btn wide" href="#hoje">Start practicing</a></section>`;
   const it = D.items[D.i], total = L().diagnostic.flat().length, done = D.stage * 5 + D.i;
-  return `<section class="stack" style="gap:18px;padding-top:12px"><div class="row between small muted"><span>Round ${D.stage + 1} of ${L().diagnostic.length}</span><a class="link small" href="#hoje">Exit</a></div><div class="prog"><i style="width:${Math.round((done / total) * 100)}%"></i></div>
+  return `<section class="stack narrow" style="gap:18px;padding-top:12px"><div class="row between small muted"><span>Round ${D.stage + 1} of ${L().diagnostic.length}</span><a class="link small" href="#hoje">Exit</a></div><div class="prog"><i style="width:${Math.round((done / total) * 100)}%"></i></div>
     ${it.listen ? `<div class="stack" style="gap:8px"><div class="row"><button class="btn ghost small" data-act="say" data-t="${esc(it.listen)}" data-v="${S.lang === "fr" ? "fr" : lead()}">Play audio</button><button class="link small" data-act="reveal">No sound? Show text</button></div>${D.reveal ? `<p>${esc(it.listen)}</p>` : ""}</div>` : ""}
     <div class="prompt" style="font-size:clamp(1.7rem,6vw,2.3rem)">${esc(it.q)}</div>
     <div class="opts">${it.options.map((o) => `<button data-act="answer" data-v="${esc(o)}">${esc(o)}</button>`).join("")}<button data-act="answer" data-v="" class="muted">I don't know</button></div></section>`;
 }
 
-const VIEWS = { hoje, conversa: conversaView, cartoes, ponte, sons, teste };
+const VIEWS = { hoje, perfil, conversa: conversaView, cartoes, ponte, sons, teste };
 function render() {
   chrome();
   if (!S.onboarded || homeOpen) { $("#view").innerHTML = welcome(); return; }
@@ -489,8 +534,9 @@ function afterEntry() {
   tab = fromHash(); render(); scrollTo(0, 0);
 }
 async function submitAuth() {
-  const email = $("#auth-email").value.trim(), password = $("#auth-password").value;
+  const email = $("#auth-email").value.trim(), password = $("#auth-password").value, nameBox = $("#auth-name");
   if (welcomeBusy) return;
+  if (nameBox && nameBox.value.trim()) { S.name = nameBox.value.trim(); writeLocal(); }
   welcomeBusy = true; welcomeErr = ""; welcomeNote = ""; render();
   $("#auth-email").value = email;
   try {
@@ -526,6 +572,7 @@ document.addEventListener("click", (e) => {
     say() { speak(d.t, d.v); },
     reveal() { D.reveal = true; render(); },
     test() { startTest(); },
+    "test-lang"() { S.lang = d.v; save(); startTest(); },
     answer() { answerTest(d.v); },
     write() { submitWriting(); },
     "go-scene"() { C.accent = null; C.lang = S.lang; startScene(d.id); },
@@ -570,6 +617,7 @@ function pqCheck() {
 }
 document.addEventListener("keydown", (e) => {
   const id = e.target.id;
+  if (/^[1-5]$/.test(e.key) && S.onboarded && !homeOpen && !e.metaKey && !e.ctrlKey && !e.altKey && !/INPUT|TEXTAREA/.test(e.target.tagName)) { location.hash = TAB_IDS[+e.key - 1]; return; }
   if (e.key !== "Enter") return;
   if (id === "chat-input" && !e.shiftKey) { e.preventDefault(); sendChat(); }
   else if (id === "card-input" && !R.rev) { e.preventDefault(); checkCard(); }
@@ -582,6 +630,7 @@ document.addEventListener("change", (e) => {
   if (id === "auto-say") { S.auto = e.target.checked; save(); }
   if (id === "slow") { S.slow = e.target.checked; save(); }
   if (id === "free-topic") C.custom = e.target.value;
+  if (id === "profile-name") { S.name = e.target.value.trim(); save(); chrome(); }
 });
 document.addEventListener("input", (e) => {
   if (e.target.id === "vocab-filter") { vf = e.target.value; $("#vocab-body").innerHTML = vocabRows(); }

@@ -119,6 +119,30 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
     assert.equal(await overflow(p), false, "overflow pt ponte");
     await p.screenshot({ path: `${shots}/8-ponte-pt.png` });
 
+    // profile
+    await p.click(".who"); await p.waitForSelector("#profile-name");
+    assert.equal(await overflow(p), false, "profile overflow");
+    await p.fill("#profile-name", "Marcos"); await p.keyboard.press("Tab");
+    assert.equal(await p.evaluate(() => S.name), "Marcos");
+    await p.screenshot({ path: `${shots}/10-profile.png` });
+    await p.click('[data-act="backup"]');
+    const backup = await p.inputValue("#backup-text");
+    assert.ok(backup.includes("profiles"));
+
+    // Mac width
+    await p.setViewportSize({ width: 1280, height: 800 });
+    for (const t of ["hoje", "perfil", "conversa", "cartoes", "ponte", "sons"]) {
+      await p.evaluate((x) => (location.hash = x), t); await p.waitForTimeout(150);
+      assert.equal(await overflow(p), false, "desktop overflow on " + t);
+      await p.screenshot({ path: `${shots}/mac-${t}.png` });
+    }
+    await p.evaluate(() => (location.hash = "hoje")); await p.waitForTimeout(100);
+    await p.evaluate(() => document.activeElement.blur()); await p.keyboard.press("3"); await p.waitForFunction(() => tab === "cartoes");
+    await p.click(".brand"); await p.waitForSelector(".landing-art"); await p.screenshot({ path: `${shots}/mac-landing.png` });
+    await p.click('[data-act="guest"]'); await p.waitForFunction(() => !homeOpen);
+    await p.setViewportSize({ width: 390, height: 664 });
+    await p.evaluate(() => (location.hash = "hoje")); await p.waitForTimeout(100);
+
     // the Voca name opens the landing page, and Continue returns to the app
     await p.click(".brand"); await p.waitForSelector(".landing .langs");
     assert.equal(await p.isVisible("#nav"), false);

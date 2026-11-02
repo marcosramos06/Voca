@@ -11,6 +11,8 @@ Live app: https://voca-nine-taupe.vercel.app
 1. Open the live address in **Safari**.
 2. Tap Share, then **Add to Home Screen**, then Add.
 
+On a Mac, open the same address in Safari and choose **File > Add to Dock** to use it as an app.
+
 Cards, bridges and sounds work offline. Conversation, feedback and class imports need a connection.
 
 ## Turn on accounts
