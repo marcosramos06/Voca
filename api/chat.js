@@ -10,7 +10,7 @@ const MAX_CHARS = 24000;
 const MAX_IMAGE_CHARS = 3_000_000; // About 2 MB once decoded.
 const TIERS = {
   quick: { model: process.env.MODEL_QUICK || "claude-haiku-5-5", maxTokens: 900 },
-  default: { model: process.env.MODEL_DEFAULT || "claude-sonnet-5-5", maxTokens: 3000 },
+  default: { model: process.env.MODEL_DEFAULT || "claude-sonnet-5-5", maxTokens: 8000 },
 };
 
 const digest = (value) => createHash("sha256").update(String(value)).digest();

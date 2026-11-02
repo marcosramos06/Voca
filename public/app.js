@@ -845,7 +845,7 @@ async function buildBridge() {
     const send = await ai;
     const d = await send.json(`Write a study guide for an English speaker who already knows ${KNOWN[k]} and is learning ${L().name}. Use real, common words only, and write all explanations in short plain English.
 Reply with only this JSON:
-{"rules":[6 to 8 of {"t":"a regular sound or spelling pattern from ${KNOWN[k]} to ${L().name}","n":"one short note","ex":[3 pairs of ["${KNOWN[k]} word","${L().name} word"]]}],"grammar":[5 to 6 of {"t":"a grammar difference","from":"a short ${KNOWN[k]} example","to":"the same example in ${L().name}","n":"one short note"}],"falseFriends":[8 to 10 of ["${L().name} word","what a ${KNOWN[k]} speaker would guess","what it really means","the right ${L().name} word for that guess"]]}`, { modelTier: "default" });
+{"rules":[6 of {"t":"a regular sound or spelling pattern from ${KNOWN[k]} to ${L().name}","n":"one short note","ex":[3 pairs of ["${KNOWN[k]} word","${L().name} word"]]}],"grammar":[5 of {"t":"a grammar difference","from":"a short ${KNOWN[k]} example","to":"the same example in ${L().name}","n":"one short note"}],"falseFriends":[8 of ["${L().name} word","what a ${KNOWN[k]} speaker would guess","what it really means","the right ${L().name} word for that guess"]]}`, { modelTier: "default" });
     const text = (x) => String(x == null ? "" : x);
     const rules = (d.rules || []).map((r) => ({ t: text(r.t), n: text(r.n), ex: (r.ex || []).filter((e) => Array.isArray(e) && e.length >= 2).map((e) => [text(e[0]), text(e[1])]) })).filter((r) => r.t && r.ex.length);
     const grammar = (d.grammar || []).map((b) => ({ t: text(b.t), from: text(b.from), to: text(b.to), n: text(b.n) })).filter((b) => b.t);
