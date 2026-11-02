@@ -4,6 +4,8 @@ Portuguese speaking and recall practice for a Spanish speaker. Brazilian forms c
 
 It installs on an iPhone from Safari. Cards, Ponte and Sons work offline. Conversa and class imports need a connection.
 
+Live app: https://voca-nine-taupe.vercel.app
+
 ## Put it on your iPhone
 
 You need a free GitHub account, a free Vercel account, and an Anthropic API account with credit. API usage is billed separately from a Claude subscription.
@@ -32,6 +34,16 @@ You need a free GitHub account, a free Vercel account, and an Anthropic API acco
 To speak instead of type, go to Settings > General > Keyboard > Keyboards and add Portuguese. Then tap the microphone on the keyboard in Conversa.
 
 For Portugal and Brazil voices in Sons, add them under Settings > Accessibility > Read & Speak > Voices. Menu names can vary by iOS version.
+
+## Project layout
+
+```text
+api/chat.js   Server that holds the API key and talks to Claude
+public/       The app itself, served to the phone
+scripts/      Local preview server and icon generator
+tests/        Server safety tests and the iPhone-size app test
+vercel.json   Hosting, security and timeout settings
+```
 
 ## Your progress
 
